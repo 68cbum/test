@@ -1,0 +1,3439 @@
+<!DOCTYPE html>
+<html lang="ko" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketing Strategy Hub & M&A Investment Decision System</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#f8fafc',
+            100: '#f1f5f9',
+            500: '#0f172a',
+            600: '#020617',
+            700: '#000000',
+            900: '#000000',
+          }
+        }
+      }
+    }
+  }
+</script>
+
+<!-- FontAwesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- PapaParse for CSV parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<!-- Google Fonts Noto Sans KR -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
+<style>
+/* ===== C기업 의사결정 워크북 · 디자인 시스템 ===== */
+:root {
+  --ink: #16233f;
+  --ink-2: #24365d;
+  --paper: #f3f5f8;
+  --surface: #ffffff;
+  --rule: #dde2ea;
+  --rule-strong: #c7cedb;
+  --text: #18202f;
+  --muted: #5d697d;
+  --faint: #8792a5;
+  --signal: #2f6fed;
+  --signal-soft: #eaf0fd;
+  --gain: #12805c;
+  --gain-soft: #e8f5ef;
+  --loss: #c2362f;
+  --loss-soft: #fcedeb;
+  --caution: #9a5c0c;
+  --caution-soft: #fcf3e3;
+  --r-lg: 12px;
+  --r: 8px;
+  --r-sm: 6px;
+  --font: 'Pretendard Variable', Pretendard, 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+button, input, textarea, select { font: inherit; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- 앱 골격 ---------- */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.main-col { min-width: 0; }
+
+.rail {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  background: var(--ink); color: #c6d0e3;
+  display: flex; flex-direction: column; gap: 20px;
+  padding: 22px 14px 16px;
+}
+.rail-brand { display: flex; gap: 11px; align-items: center; padding: 0 8px; }
+.rail-mark {
+  width: 34px; height: 34px; border-radius: 9px; flex: none;
+  background: #fff; color: var(--ink);
+  display: grid; place-items: center; font-weight: 800; font-size: 16px;
+}
+.rail-brand strong { display: block; color: #fff; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.rail-brand span { display: block; font-size: 11.5px; color: #8e9bb7; }
+
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-group { font-size: 11.5px; font-weight: 600; color: #7b88a5; padding: 14px 10px 6px; }
+.nav-group:first-child { padding-top: 0; }
+.nav button {
+  appearance: none; border: 0; background: transparent;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 10px; border-radius: 7px;
+  font-size: 13.5px; font-weight: 500; color: #c6d0e3; text-align: left; cursor: pointer;
+}
+.nav button i { width: 16px; text-align: center; font-size: 13px; color: #7b88a5; }
+.nav button:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.nav button.active { background: #fff; color: var(--ink); font-weight: 700; }
+.nav button.active i { color: var(--signal); }
+.nav button:focus-visible, .rail-files button:focus-visible, .rail-files label:focus-within { outline: 2px solid #8fb1ff; outline-offset: 1px; }
+
+.rail-figs { border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 16px 8px 0; }
+.rail-figs h4 { margin: 0 0 8px; font-size: 11.5px; font-weight: 600; color: #7b88a5; }
+.rail-fig { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 12.5px; }
+.rail-fig b { color: #fff; font-size: 13.5px; font-weight: 700; }
+.rail-figs p { margin: 8px 0 0; font-size: 11px; color: #7b88a5; line-height: 1.5; }
+
+.rail-files { margin-top: auto; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 12px; display: flex; flex-direction: column; gap: 1px; }
+.rail-files button, .rail-files label {
+  appearance: none; border: 0; background: transparent; margin: 0;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 6px 10px; border-radius: 6px;
+  font-size: 12.5px; font-weight: 500; color: #aab6cc; cursor: pointer; justify-content: flex-start;
+}
+.rail-files i { width: 16px; text-align: center; font-size: 12px; color: #7b88a5; }
+.rail-files button:hover, .rail-files label:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.rail-files .danger { color: #f0aaa4; }
+.rail-files .danger i { color: #d9837c; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 14px 36px;
+  background: rgba(243, 245, 248, 0.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.crumb { font-size: 13px; color: var(--muted); display: flex; align-items: baseline; gap: 8px; }
+.crumb b { color: var(--text); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.project-chip { text-align: right; line-height: 1.35; }
+.project-chip strong { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
+.project-chip span { font-size: 12px; color: var(--muted); }
+
+main { padding: 28px 36px 72px; max-width: 1200px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ---------- 기본 블록 ---------- */
+.card {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg);
+  padding: 22px 24px; margin-bottom: 18px;
+}
+.glass-card { background: var(--surface); border: 1px solid var(--rule); }
+.section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.section-heading h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+.section-heading span { font-size: 12px; color: var(--faint); white-space: nowrap; }
+.help { color: var(--muted); font-size: 12.5px; line-height: 1.65; max-width: 80ch; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 18px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 14px; }
+
+.field { margin-bottom: 14px; }
+label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: #344056; }
+.counter { color: var(--faint); font-weight: 500; font-size: 11px; }
+
+.app input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not(.bg-transparent),
+.app textarea,
+.app select:not(.bg-transparent) {
+  width: 100%; padding: 9px 11px;
+  border: 1px solid var(--rule-strong); border-radius: var(--r-sm);
+  background: #fff; color: var(--text); font-size: 13.5px;
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.app input:focus, .app textarea:focus, .app select:focus { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+.app input:disabled { background: #eef1f5; color: var(--muted); }
+.app #searchInput { padding-left: 30px; }
+textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+input[type=range] { width: 100%; accent-color: var(--ink); }
+input[type=checkbox] { accent-color: var(--ink); width: 16px; height: 16px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid transparent; border-radius: 7px;
+  padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-blue, .btn-green, .btn-purple, .btn-dark { background: var(--ink); color: #fff; }
+.btn-blue:hover, .btn-green:hover, .btn-purple:hover, .btn-dark:hover { background: var(--ink-2); }
+.btn-light { background: #fff; color: var(--text); border-color: var(--rule-strong); }
+.btn-light:hover { background: #f5f7fa; }
+.btn-red { background: var(--loss-soft); color: var(--loss); }
+.btn-red:hover { background: #f8dcd9; }
+
+/* ---------- 개요 ---------- */
+.progress-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg);
+  margin-bottom: 18px; overflow: hidden;
+}
+.progress-card { padding: 20px 24px; border-left: 1px solid var(--rule); }
+.progress-card:first-child { border-left: 0; background: #fafbfd; }
+.progress-card small { font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.progress-number { margin: 4px 0 10px; font-size: 30px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); }
+.progress-bar { height: 6px; background: #e8ecf2; border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--signal); border-radius: 99px; transition: width 0.3s ease; }
+.progress-card:first-child .progress-fill { background: var(--ink); }
+
+.module-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-lg);
+  overflow: hidden; margin-bottom: 18px;
+}
+.module-card { padding: 22px 24px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; align-items: flex-start; }
+.module-card:nth-child(-n+2) { border-top: 0; }
+.module-card:nth-child(even) { border-left: 1px solid var(--rule); }
+.module-card h3 { margin: 0 0 6px; font-size: 15px; font-weight: 700; color: var(--text); }
+.module-card p { margin: 0 0 14px; color: var(--muted); font-size: 12.5px; line-height: 1.65; flex: 1; }
+.module-card .btn { margin-top: 0 !important; }
+
+/* ---------- STP / 4P 작업 영역 ---------- */
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+.live-preview {
+  position: sticky; top: 78px; max-height: calc(100vh - 100px); overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--ink);
+  border-radius: var(--r-lg); padding: 20px;
+}
+.preview-label { color: var(--faint); font-size: 11.5px; font-weight: 600; margin-bottom: 6px; }
+.preview-title { margin: 0 0 2px; font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+.preview-brand { color: var(--muted); margin-bottom: 14px; font-size: 13px; }
+.preview-block { padding: 12px 0; border-top: 1px solid var(--rule); }
+.preview-block h3 { margin: 0 0 8px; font-size: 13.5px; color: var(--text); }
+.preview-item { margin-bottom: 10px; }
+.preview-item strong { display: block; margin-bottom: 2px; color: var(--faint); font-size: 11.5px; font-weight: 600; }
+.preview-item div { white-space: pre-wrap; line-height: 1.55; font-size: 12.5px; color: var(--text); }
+
+.axis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.axis-box { padding: 14px; background: #f7f8fb; border-radius: 10px; border: 1px solid var(--rule); }
+.axis-box h4 { margin: 0 0 10px; font-size: 12.5px; color: var(--text); }
+.axis-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.coordinate-grid { display: grid; grid-template-columns: 1fr 90px 90px; gap: 8px; align-items: end; }
+.own-brand-box { padding: 14px; border: 1px solid var(--ink); border-radius: 10px; background: #f5f7fb; margin-bottom: 14px; }
+.competitor-row { display: grid; grid-template-columns: minmax(120px, 1fr) 80px 80px auto; gap: 8px; margin-bottom: 8px; }
+.map-wrapper { margin-top: 16px; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: #fff; }
+#positioningMap { width: 100%; height: auto; display: block; touch-action: none; }
+
+/* ---------- 보고서 ---------- */
+.report-header { padding-bottom: 16px; margin-bottom: 20px; border-bottom: 2px solid var(--ink); }
+.report-section { margin-bottom: 28px; }
+.report-section > h2 { border-bottom: 1px solid var(--rule); padding-bottom: 6px; margin-bottom: 12px; font-size: 16px; color: var(--text); }
+.report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.report-box { background: #f7f8fb; padding: 14px; border-radius: 8px; border: 1px solid var(--rule); }
+.report-box strong { display: block; margin-bottom: 4px; font-size: 11.5px; color: var(--muted); }
+
+/* ---------- 계산기 공통 ---------- */
+.metric {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+}
+.metric span { font-size: 12px; color: var(--muted); font-weight: 500; }
+.metric strong { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; word-break: keep-all; }
+.notice {
+  padding: 11px 14px; border-radius: 8px; font-size: 12.5px; line-height: 1.65; margin-top: 14px;
+  background: var(--caution-soft); border: 1px solid #f0dcb4; color: var(--caution);
+}
+.notice:empty { display: none; }
+.notice.good { background: var(--gain-soft); border-color: #c5e6d6; color: var(--gain); }
+.notice.danger { background: var(--loss-soft); border-color: #f3cbc6; color: var(--loss); }
+.note { font-size: 12px; color: var(--muted); line-height: 1.65; margin-top: 10px; }
+.chart { width: 100%; height: 260px; display: block; }
+.tablewrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--rule); background: #fff; }
+.tablewrap table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: right; }
+.tablewrap th, .tablewrap td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.tablewrap th { background: #f6f7fa; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.tablewrap tbody tr:last-child td { border-bottom: 0; }
+.tablewrap tbody tr:hover { background: #fafbfd; }
+.tablewrap th:first-child, .tablewrap td:first-child { text-align: left; }
+.summary-box {
+  background: var(--signal-soft); border: 1px solid #cfdcfa; border-radius: 10px;
+  padding: 14px 16px; font-size: 13px; line-height: 1.7; margin-bottom: 14px; color: #1d2f57;
+}
+.text-green { color: var(--gain); }
+.text-red { color: var(--loss); }
+.text-amber { color: var(--caution); }
+
+/* M&A 판정 패널 */
+.brief { background: var(--ink) !important; color: #e4e9f3; border: 0 !important; border-radius: var(--r-lg) !important; }
+.brief p { color: #dbe2ef !important; max-width: 90ch; }
+
+.pulse-dot { box-shadow: 0 0 0 0 rgba(18, 128, 92, 0.6); animation: pulse-green 2s infinite; }
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(18, 128, 92, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(18, 128, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(18, 128, 92, 0); }
+}
+
+/* Tailwind 기본값 다듬기: 한글 숫자에 고정폭 글꼴 대신 본문 글꼴, 대문자 변환 해제 */
+.app .font-mono { font-family: var(--font) !important; letter-spacing: 0; }
+.app #csvUrlInput { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; }
+.app .uppercase { text-transform: none; }
+.app .tracking-wider, .app .tracking-wide { letter-spacing: 0; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1140px) {
+  .workspace { grid-template-columns: 1fr; }
+  .live-preview { position: static; max-height: none; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .rail-brand span { display: none; }
+  .rail-files button, .rail-files label { padding: 4px 8px; font-size: 12px; }
+  .rail { position: static; height: auto; padding: 14px 14px 10px; gap: 12px; }
+  .nav { flex-direction: row; overflow-x: auto; gap: 4px; }
+  .nav-group, .rail-figs { display: none; }
+  .nav button { width: auto; white-space: nowrap; }
+  .rail-files { flex-direction: row; flex-wrap: wrap; margin-top: 0; padding-top: 8px; }
+  .rail-files button, .rail-files label { width: auto; }
+  .topbar { padding: 12px 18px; }
+  main { padding: 20px 16px 48px; }
+}
+@media (max-width: 750px) {
+  .grid-2, .grid-3, .grid-4, .axis-grid, .report-grid, .module-grid, .progress-cards { grid-template-columns: 1fr; }
+  .module-card:nth-child(even) { border-left: 0; }
+  .module-card:nth-child(2) { border-top: 1px solid var(--rule); }
+  .progress-card { border-left: 0; border-top: 1px solid var(--rule); }
+  .progress-card:first-child { border-top: 0; }
+  .card { padding: 18px 16px; }
+  .topbar { flex-direction: column; align-items: flex-start; }
+  .project-chip { text-align: left; }
+}
+@media print {
+  .rail, .topbar { display: none !important; }
+  .app { display: block; }
+  main { padding: 0; max-width: none; }
+  body { background: #fff; }
+}
+
+</style>
+</head>
+
+<body>
+<div class="app">
+<aside class="rail" aria-label="메뉴">
+  <div class="rail-brand">
+    <div class="rail-mark" aria-hidden="true">C</div>
+    <div><strong>Strategy Hub</strong><span>C기업 의사결정 워크북</span></div>
+  </div>
+
+  <nav class="nav" aria-label="페이지">
+    <div class="nav-group">전략 수립</div>
+    <button class="active" data-page="dashboard" onclick="showPage('dashboard')"><i class="fa-solid fa-house"></i> 개요</button>
+    <button data-page="stp" onclick="showPage('stp')"><i class="fa-solid fa-bullseye"></i> STP 전략</button>
+    <button data-page="fourp" onclick="showPage('fourp')"><i class="fa-solid fa-boxes-packing"></i> 4P 믹스</button>
+    <div class="nav-group">분석과 의사결정</div>
+    <button data-page="live-dashboard" onclick="showPage('live-dashboard')"><i class="fa-solid fa-chart-line"></i> 실시간 데이터</button>
+    <button data-page="ma-calc" onclick="showPage('ma-calc')"><i class="fa-solid fa-calculator"></i> 특허 M&amp;A 계산기</button>
+    <button data-page="strategic" onclick="showPage('strategic')"><i class="fa-solid fa-scale-balanced"></i> 투자 의사결정</button>
+    <div class="nav-group">결과물</div>
+    <button data-page="report" onclick="showPage('report')"><i class="fa-solid fa-file-lines"></i> 전략 보고서</button>
+  </nav>
+
+  <div class="rail-figs">
+    <h4>기준 분기 실적</h4>
+    <div class="rail-fig"><span>보유현금</span><b id="railCash">—</b></div>
+    <div class="rail-fig"><span>영업이익</span><b id="railOi">—</b></div>
+    <div class="rail-fig"><span>영업이익률</span><b id="railOpm">—</b></div>
+    <div class="rail-fig"><span>당기순이익</span><b id="railNi">—</b></div>
+    <p>투자 의사결정 탭의 기준 재무정보와 연동됩니다.</p>
+  </div>
+
+  <div class="rail-files">
+    <button onclick="saveToLocalStorage()"><i class="fa-solid fa-floppy-disk"></i> 브라우저에 저장</button>
+    <button onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> JSON 내보내기</button>
+    <label><i class="fa-solid fa-file-import"></i> JSON 불러오기<input type="file" id="importFile" class="hidden" accept=".json" onchange="importJSON(event)"></label>
+    <button onclick="exportHTML()"><i class="fa-solid fa-code"></i> HTML 내보내기</button>
+    <button onclick="exportReportToMarkdown()"><i class="fa-solid fa-file-lines"></i> 마크다운 저장</button>
+    <button class="danger" onclick="resetForm()"><i class="fa-solid fa-trash"></i> 전략 데이터 초기화</button>
+  </div>
+</aside>
+
+<div class="main-col">
+<header class="topbar">
+  <div class="crumb"><span>C기업</span><span aria-hidden="true">/</span><b id="topbarTitle">개요</b></div>
+  <div class="project-chip"><strong id="headerProject">새 마케팅 프로젝트</strong><span id="headerBrand">브랜드 미설정</span></div>
+</header>
+
+<main>
+
+<!-- OVERVIEW DASHBOARD PAGE -->
+<section id="page-dashboard" class="page active">
+  <div class="dashboard-title mb-6">
+    <h2 id="dashboardProject" class="text-2xl font-bold text-slate-900 mb-1">새 마케팅 프로젝트</h2>
+    <p class="text-slate-600 text-sm">STP 전략을 수립하고, 4P 믹스를 연결하며, 실시간 데이터 분석 및 특허권 M&amp;A 투자 분석을 진행하세요.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-heading">
+      <h2><i class="fa-solid fa-folder-open text-slate-900 mr-2"></i>프로젝트 기본 정보</h2>
+      <span>Project Info</span>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>프로젝트명</label>
+        <input id="projectName" data-common placeholder="예: 대학생 대상 신규 카페 마케팅 전략">
+      </div>
+      <div class="field">
+        <label>브랜드 / 기업명</label>
+        <input id="brandName" data-common placeholder="예: Campus Brew">
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-cards">
+    <div class="progress-card">
+      <small>전체 전략 완성도</small>
+      <div class="progress-number" id="totalProgressText">0%</div>
+      <div class="progress-bar"><div class="progress-fill" id="totalProgressBar"></div></div>
+    </div>
+    <div class="progress-card">
+      <small>STP 전략</small>
+      <div class="progress-number" id="stpProgressText">0%</div>
+      <div class="progress-bar"><div class="progress-fill" id="stpProgressBar"></div></div>
+    </div>
+    <div class="progress-card">
+      <small>4P 믹스</small>
+      <div class="progress-number" id="fourpProgressText">0%</div>
+      <div class="progress-bar"><div class="progress-fill" id="fourpProgressBar"></div></div>
+    </div>
+  </div>
+
+  <div class="module-grid">
+    <div class="module-card stp">
+      <h3>STP 전략</h3>
+      <p>시장을 세분화(S)하고 핵심 타깃(T)을 선택한 뒤 차별화된 시장 위치(P)를 설계합니다.</p>
+      <button class="btn btn-purple mt-3" onclick="showPage('stp')">
+        <i class="fa-solid fa-arrow-right"></i> STP 전략 열기
+      </button>
+    </div>
+
+    <div class="module-card fourp">
+      <h3>4P 믹스</h3>
+      <p>STP 타깃과 포지셔닝에 맞춰 실행 가능한 제품(P), 가격(P), 유통(P), 촉진(P) 전략을 세웁니다.</p>
+      <button class="btn btn-green mt-3" onclick="showPage('fourp')">
+        <i class="fa-solid fa-arrow-right"></i> 4P 전략 열기
+      </button>
+    </div>
+
+    <div class="module-card analytics">
+      <h3>실시간 데이터</h3>
+      <p>구글 스프레드시트 실시간 연동을 통한 시장 데이터 분석, dynamic KPI 및 다차원 차트 조회를 실행합니다.</p>
+      <button class="btn btn-blue mt-3" onclick="showPage('live-dashboard')">
+        <i class="fa-solid fa-chart-pie"></i> 실시간 대시보드
+      </button>
+    </div>
+
+    <div class="module-card ma">
+      <h3>특허 M&amp;A 계산기</h3>
+      <p>특허권 인수 투자금액, 분기 제조원가 절감액, 실패 손실, 경쟁사 입찰 시나리오 및 기대가치를 계산합니다.</p>
+      <button class="btn btn-dark mt-3" onclick="showPage('ma-calc')">
+        <i class="fa-solid fa-calculator"></i> M&amp;A 계산기 열기
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- STP STRATEGY PAGE -->
+<section id="page-stp" class="page">
+  <div class="workspace">
+    <div>
+      <div class="card">
+        <div class="section-heading">
+          <h2>STP Context & Definition</h2>
+          <span>Strategy Scope</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>프로젝트명</label>
+            <input class="mirror-project" disabled>
+          </div>
+          <div class="field">
+            <label>브랜드 / 기업명</label>
+            <input class="mirror-brand" disabled>
+          </div>
+        </div>
+        <div class="field">
+          <label><span>시장 정의</span><span class="counter" data-counter="marketDefinition">0자</span></label>
+          <textarea id="marketDefinition" data-stp placeholder="분석 대상 시장의 범위를 정의하세요."></textarea>
+        </div>
+        <div class="field">
+          <label><span>전략 목표</span><span class="counter" data-counter="strategyObjective">0자</span></label>
+          <textarea id="strategyObjective" data-stp placeholder="STP 전략을 통해 달성하고자 하는 비즈니스 목표를 작성하세요."></textarea>
+        </div>
+      </div>
+
+      <!-- Segmentation -->
+      <div class="card">
+        <div class="section-heading">
+          <h2>1. Segmentation (시장 세분화)</h2>
+          <span>Market Segments</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label><span>인구통계적 기준</span><span class="counter" data-counter="segDemo">0자</span></label>
+            <textarea id="segDemo" data-stp placeholder="연령, 성별, 소득, 직업, 학력 등"></textarea>
+          </div>
+          <div class="field">
+            <label><span>지리적 기준</span><span class="counter" data-counter="segGeo">0자</span></label>
+            <textarea id="segGeo" data-stp placeholder="지역, 상권, 생활권 등"></textarea>
+          </div>
+          <div class="field">
+            <label><span>심리적 기준</span><span class="counter" data-counter="segPsy">0자</span></label>
+            <textarea id="segPsy" data-stp placeholder="라이프스타일, 가치관, 관심사 등"></textarea>
+          </div>
+          <div class="field">
+            <label><span>행동적 기준</span><span class="counter" data-counter="segBehavior">0자</span></label>
+            <textarea id="segBehavior" data-stp placeholder="구매빈도, 이용목적, 충성도, 추구편익 등"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label><span>주요 세그먼트 프로필</span><span class="counter" data-counter="segmentProfiles">0자</span></label>
+          <textarea id="segmentProfiles" data-stp placeholder="예: Group A (가성비 추구형), Group B (프리미엄 경험형)"></textarea>
+        </div>
+      </div>
+
+      <!-- Targeting -->
+      <div class="card">
+        <div class="section-heading">
+          <h2>2. Targeting (표적시장 선정)</h2>
+          <span>Target Market</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label><span>Primary Target (핵심 타깃)</span><span class="counter" data-counter="primaryTarget">0자</span></label>
+            <textarea id="primaryTarget" data-stp placeholder="핵심 표적 고객군을 명확하게 명시하세요."></textarea>
+          </div>
+          <div class="field">
+            <label><span>Secondary Target (보조 타깃)</span><span class="counter" data-counter="secondaryTarget">0자</span></label>
+            <textarea id="secondaryTarget" data-stp placeholder="확장 가능성이 있는 서브 고객군"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label><span>타깃 선정 근거</span><span class="counter" data-counter="targetRationale">0자</span></label>
+          <textarea id="targetRationale" data-stp placeholder="시장 규모, 수익성, 자사 적합성 등 표적시장 선정 이유"></textarea>
+        </div>
+      </div>
+
+      <!-- Positioning -->
+      <div class="card">
+        <div class="section-heading">
+          <h2>3. Positioning (포지셔닝 전략)</h2>
+          <span>Market Position</span>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label><span>차별점 (POD)</span><span class="counter" data-counter="pod">0자</span></label>
+            <textarea id="pod" data-stp placeholder="경쟁사 대비 유일하게 우위인 가치"></textarea>
+          </div>
+          <div class="field">
+            <label><span>공통점 (POP)</span><span class="counter" data-counter="pop">0자</span></label>
+            <textarea id="pop" data-stp placeholder="해당 카테고리 진입을 위해 갖춰야 할 기본적 요소"></textarea>
+          </div>
+        </div>
+        <div class="field">
+          <label><span>Positioning Statement</span><span class="counter" data-counter="positioningStatement">0자</span></label>
+          <textarea id="positioningStatement" data-stp placeholder="[타깃]에게 [브랜드]는 [경쟁군] 중 [차별적 편익]을 제공하는 [카테고리]이다."></textarea>
+        </div>
+
+        <!-- Positioning Map Interactive -->
+        <div class="mt-6 border-t border-slate-200 pt-5">
+          <h3 class="font-bold text-slate-900 mb-2 text-sm"><i class="fa-solid fa-map-pin mr-1"></i> 포지셔닝 맵 (Positioning Map)</h3>
+          <p class="help mb-4">X/Y 축 라벨을 지정하고 드래그 또는 좌표 입력을 통해 브랜드를 배치하세요.</p>
+
+          <div class="axis-grid">
+            <div class="axis-box">
+              <h4>X축 라벨 (좌/우)</h4>
+              <div class="axis-inputs">
+                <input id="xLeft" value="저가격">
+                <input id="xRight" value="고가격">
+              </div>
+            </div>
+            <div class="axis-box">
+              <h4>Y축 라벨 (하/상)</h4>
+              <div class="axis-inputs">
+                <input id="yBottom" value="기능 중심">
+                <input id="yTop" value="경험 중심">
+              </div>
+            </div>
+          </div>
+
+          <div class="own-brand-box">
+            <strong class="text-slate-900 text-xs">자사 브랜드 좌표</strong>
+            <div class="coordinate-grid mt-2">
+              <input id="ownBrandName" disabled class="bg-slate-100 border-slate-300">
+              <input id="ownX" type="number" min="0" max="100" value="50" placeholder="X">
+              <input id="ownY" type="number" min="0" max="100" value="75" placeholder="Y">
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+              <strong class="text-xs text-slate-700">경쟁 브랜드 목록</strong>
+              <button class="btn btn-dark text-xs" onclick="addCompetitor()"><i class="fa-solid fa-plus"></i> 경쟁사 추가</button>
+            </div>
+            <div id="competitorList"></div>
+          </div>
+
+          <div class="map-wrapper">
+            <svg id="positioningMap" viewBox="0 0 700 500"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="live-preview" id="stpPreview">
+      <!-- Dynamically filled live preview -->
+    </aside>
+  </div>
+</section>
+
+<!-- 4P MARKETING MIX PAGE -->
+<section id="page-fourp" class="page">
+  <div class="workspace">
+    <div>
+      <div class="card">
+        <div class="section-heading">
+          <h2>4P Marketing Mix</h2>
+          <span>Execution Alignment</span>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mb-4 text-xs space-y-2">
+          <div class="text-slate-900 font-bold uppercase"><i class="fa-solid fa-link mr-1"></i> STP 연동 핵심 정보</div>
+          <div class="grid grid-cols-2 gap-3 text-slate-700">
+            <div><span class="text-slate-500 block">Primary Target:</span><span id="fourpTargetReference" class="font-medium">STP 페이지에서 작성해 주세요.</span></div>
+            <div><span class="text-slate-500 block">Positioning Statement:</span><span id="fourpPositionReference" class="font-medium">STP 페이지에서 작성해 주세요.</span></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label><span>Value Proposition (핵심 가치 제안)</span><span class="counter" data-counter="valueProposition">0자</span></label>
+          <textarea id="valueProposition" data-fourp placeholder="고객에게 제공할 핵심 가치 요약"></textarea>
+        </div>
+      </div>
+
+      <!-- Product -->
+      <div class="card">
+        <div class="section-heading"><h2>1. Product (제품 전략)</h2><span>Product & Brand</span></div>
+        <div class="grid-2">
+          <div class="field"><label><span>핵심 제품/서비스</span><span class="counter" data-counter="productCore">0자</span></label><textarea id="productCore" data-fourp></textarea></div>
+          <div class="field"><label><span>차별화 요소</span><span class="counter" data-counter="productDiff">0자</span></label><textarea id="productDiff" data-fourp></textarea></div>
+          <div class="field"><label><span>브랜드 & 패키징</span><span class="counter" data-counter="productBrand">0자</span></label><textarea id="productBrand" data-fourp></textarea></div>
+          <div class="field"><label><span>부가가치 & 서비스</span><span class="counter" data-counter="productValue">0자</span></label><textarea id="productValue" data-fourp></textarea></div>
+        </div>
+      </div>
+
+      <!-- Price -->
+      <div class="card">
+        <div class="section-heading"><h2>2. Price (가격 전략)</h2><span>Pricing Policy</span></div>
+        <div class="grid-2">
+          <div class="field"><label><span>가격 수준</span><span class="counter" data-counter="priceLevel">0자</span></label><textarea id="priceLevel" data-fourp></textarea></div>
+          <div class="field"><label><span>수익/수수료 모델</span><span class="counter" data-counter="priceModel">0자</span></label><textarea id="priceModel" data-fourp></textarea></div>
+          <div class="field"><label><span>가격 책정 전략</span><span class="counter" data-counter="priceStrategy">0자</span></label><textarea id="priceStrategy" data-fourp></textarea></div>
+          <div class="field"><label><span>할인 & 프로모션 가격</span><span class="counter" data-counter="priceDiscount">0자</span></label><textarea id="priceDiscount" data-fourp></textarea></div>
+        </div>
+      </div>
+
+      <!-- Place -->
+      <div class="card">
+        <div class="section-heading"><h2>3. Place (유통 전략)</h2><span>Distribution</span></div>
+        <div class="grid-2">
+          <div class="field"><label><span>주요 유통 채널</span><span class="counter" data-counter="placeChannel">0자</span></label><textarea id="placeChannel" data-fourp></textarea></div>
+          <div class="field"><label><span>커버리지/입지 전략</span><span class="counter" data-counter="placeCoverage">0자</span></label><textarea id="placeCoverage" data-fourp></textarea></div>
+          <div class="field"><label><span>물류 및 고객 접점</span><span class="counter" data-counter="placeLogistics">0자</span></label><textarea id="placeLogistics" data-fourp></textarea></div>
+          <div class="field"><label><span>파트너십 전략</span><span class="counter" data-counter="placePartner">0자</span></label><textarea id="placePartner" data-fourp></textarea></div>
+        </div>
+      </div>
+
+      <!-- Promotion -->
+      <div class="card">
+        <div class="section-heading"><h2>4. Promotion (촉진 전략)</h2><span>Communication</span></div>
+        <div class="grid-2">
+          <div class="field"><label><span>커뮤니케이션 믹스</span><span class="counter" data-counter="promoMix">0자</span></label><textarea id="promoMix" data-fourp></textarea></div>
+          <div class="field"><label><span>핵심 메시지</span><span class="counter" data-counter="promoMessage">0자</span></label><textarea id="promoMessage" data-fourp></textarea></div>
+          <div class="field"><label><span>예산 집행 계획</span><span class="counter" data-counter="promoBudget">0자</span></label><textarea id="promoBudget" data-fourp></textarea></div>
+          <div class="field"><label><span>마케팅 채널</span><span class="counter" data-counter="promoChannel">0자</span></label><textarea id="promoChannel" data-fourp></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="live-preview" id="fourpPreview">
+      <!-- Dynamically filled live preview -->
+    </aside>
+  </div>
+</section>
+
+<!-- REAL-TIME INFOGRAPHIC DASHBOARD PAGE -->
+<section id="page-live-dashboard" class="page">
+  <!-- Top Bar Controls -->
+  <div class="glass-card rounded-2xl p-4 mb-6 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md">
+        <i class="fa-solid fa-chart-pie text-lg"></i>
+      </div>
+      <div>
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          실시간 데이터 분석 대시보드
+          <span id="liveStatusBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 font-normal">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
+            실시간 연동중
+          </span>
+        </h2>
+        <p class="text-xs text-slate-500">구글 스프레드시트 CSV 데이터 실시간 분석 및 시각화</p>
+      </div>
+    </div>
+
+    <div class="flex items-center flex-wrap gap-3 text-xs">
+      <!-- Auto Refresh Select -->
+      <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700">
+        <i class="fa-solid fa-rotate-right text-xs text-slate-500"></i>
+        <span class="text-xs text-slate-500">주기:</span>
+        <select id="autoRefreshSelect" class="bg-transparent text-xs text-slate-900 focus:outline-none cursor-pointer">
+          <option value="0" class="bg-white">수동</option>
+          <option value="15" selected class="bg-white">15초 마다</option>
+          <option value="30" class="bg-white">30초 마다</option>
+          <option value="60" class="bg-white">1분 마다</option>
+        </select>
+      </div>
+
+      <!-- Last Updated -->
+      <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+        <span>최종 동기화:</span>
+        <span id="lastUpdatedTime" class="text-slate-800 font-mono font-medium">--:--:--</span>
+      </div>
+
+      <!-- Manual Refresh Button -->
+      <button id="refreshBtn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition-all shadow-sm active:scale-95">
+        <i id="refreshIcon" class="fa-solid fa-arrows-rotate"></i>
+        <span>새로고침</span>
+      </button>
+
+      <!-- Settings Drawer Toggle -->
+      <button id="toggleSourceBtn" class="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-all" title="데이터 소스 설정">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- CSV Source Bar -->
+  <div id="sourceBar" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6 hidden">
+    <div class="flex flex-col sm:flex-row items-center gap-3 text-xs">
+      <span class="text-slate-600 whitespace-nowrap font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-link text-slate-900"></i> 구글 스프레드시트 CSV URL:
+      </span>
+      <div class="flex-1 w-full flex items-center gap-2">
+        <input id="csvUrlInput" type="text" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-slate-800 text-xs font-mono focus:outline-none focus:border-slate-900" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vQKG71b389GiIpr9YXn6p6EeeXg0DyhTiGZjre4jvq6jHA3FYRSQjqdC_zNGgpBU1Bt9dpn4JObp-yL/pub?output=csv">
+        <button id="applyUrlBtn" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg whitespace-nowrap font-medium transition-colors">
+          적용
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Banner -->
+  <div id="alertBox" class="hidden rounded-xl p-4 border flex items-start gap-3 transition-all mb-6">
+    <i id="alertIcon" class="fa-solid text-lg mt-0.5"></i>
+    <div class="flex-1 text-sm">
+      <h4 id="alertTitle" class="font-bold"></h4>
+      <p id="alertMessage" class="text-xs opacity-90 mt-0.5"></p>
+    </div>
+    <button id="closeAlertBtn" class="text-slate-500 hover:text-slate-900 text-xs">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- Key Metrics (KPIs) -->
+  <section class="mb-6">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+        <i class="fa-solid fa-gauge-high text-slate-900"></i> 핵심 요약 지표 (Key Metrics)
+      </h3>
+      <span id="dataCountBadge" class="text-xs bg-slate-50 text-slate-700 px-2.5 py-1 rounded-full font-mono border border-slate-200">
+        데이터 읽는 중...
+      </span>
+    </div>
+    <div id="kpiContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-5 rounded-2xl animate-pulse">
+        <div class="h-4 bg-slate-200 rounded w-1/2 mb-3"></div>
+        <div class="h-8 bg-slate-200 rounded w-3/4 mb-2"></div>
+        <div class="h-3 bg-slate-200 rounded w-1/3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Focus Chart -->
+  <section class="glass-card rounded-2xl p-5 border border-slate-200 space-y-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+      <div>
+        <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-slate-800"></i> 맞춤 다차원 분석 차트 (Focus Chart)
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">기준 컬럼(X축) 및 집계 컬럼(Y축)을 지정하고 시간순 정렬 차트를 생성합니다.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 text-xs">
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+          <span class="text-slate-600 font-medium">기준(X축):</span>
+          <select id="xAxisSelect" class="bg-transparent text-slate-900 focus:outline-none cursor-pointer font-medium"></select>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+          <span class="text-slate-600 font-medium">집계(Y축):</span>
+          <select id="yAxisSelect" class="bg-transparent text-slate-900 focus:outline-none cursor-pointer font-medium"></select>
+        </div>
+
+        <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 text-xs">
+          <button class="focus-chart-btn px-2.5 py-1 rounded-md text-slate-700 bg-white font-medium transition-colors shadow-sm" data-type="bar">
+            <i class="fa-solid fa-chart-simple"></i> 막대
+          </button>
+          <button class="focus-chart-btn px-2.5 py-1 rounded-md text-slate-500 font-medium transition-colors" data-type="line">
+            <i class="fa-solid fa-chart-line"></i> 선
+          </button>
+          <button class="focus-chart-btn px-2.5 py-1 rounded-md text-slate-500 font-medium transition-colors" data-type="doughnut">
+            <i class="fa-solid fa-circle-notch"></i> 도넛
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative h-80 w-full flex items-center justify-center">
+      <canvas id="interactiveCanvas"></canvas>
+    </div>
+  </section>
+
+  <!-- All Columns Grid Module -->
+  <section class="space-y-4 mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-slate-900"></i> 컬럼별 개별 시각화 모듈 (All Columns Grid)
+        </h3>
+        <p class="text-xs text-slate-500 mt-0.5">'구분' 컬럼을 제외한 모든 컬럼의 차트 및 통계 카드가 동적으로 생성됩니다.</p>
+      </div>
+      <span id="totalColBadge" class="text-xs bg-slate-50 text-slate-700 px-2.5 py-1 rounded-full font-mono border border-slate-200">
+        0 개 컬럼 시각화
+      </span>
+    </div>
+
+    <div id="allColumnsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+  </section>
+
+  <!-- Raw Data Table Section -->
+  <section class="glass-card rounded-2xl border border-slate-200 overflow-hidden">
+    <div class="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <i class="fa-solid fa-table text-slate-700"></i> 원본 실시간 데이터
+        </h3>
+        <span id="filteredCountBadge" class="text-xs bg-slate-200 text-slate-800 border border-slate-300 px-2.5 py-0.5 rounded-full font-mono">
+          0 개 레코드
+        </span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+        <div class="relative flex-1 sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input id="searchInput" type="text" placeholder="검색어 입력..." class="w-full bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-900">
+        </div>
+
+        <select id="categoryFilterSelect" class="bg-white border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-slate-900 cursor-pointer">
+          <option value="">전체 필터</option>
+        </select>
+
+        <button id="exportCsvBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium border border-slate-300 transition-all">
+          <i class="fa-solid fa-file-csv text-xs text-slate-900"></i>
+          <span>CSV 내보내기</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-700">
+        <thead id="tableHeader" class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 uppercase tracking-wider">
+          <tr><th class="p-4">데이터 로드 중...</th></tr>
+        </thead>
+        <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
+      </table>
+    </div>
+
+    <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span>페이지당 표시:</span>
+        <select id="pageSizeSelect" class="bg-white border border-slate-300 text-slate-700 rounded px-2 py-1 focus:outline-none">
+          <option value="10">10개</option>
+          <option value="25" selected>25개</option>
+          <option value="50">50개</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span id="pageInfoText">1 / 1 페이지</span>
+        <div class="flex items-center gap-1">
+          <button id="prevPageBtn" class="p-1.5 rounded bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 disabled:opacity-40">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button id="nextPageBtn" class="p-1.5 rounded bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 disabled:opacity-40">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- M&A INVESTMENT ANALYSIS CALCULATOR PAGE (ENHANCED RISK & DECISION SYSTEM) -->
+<section id="page-ma-calc" class="page">
+  <div class="mb-6 flex flex-wrap justify-between items-end border-b border-slate-200 pb-4 gap-3">
+    <div>
+      <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved text-slate-700"></i> C사 투자 판단 지원
+      </div>
+      <h2 class="text-2xl font-bold text-slate-900">신공정 특허권 M&amp;A 투자 분석 및 위험 허용 상한 시뮬레이터</h2>
+      <p class="text-xs text-slate-500 mt-1">C사 재무자료 기반 위험 허용 상한 계산, 입찰가별 투자 판단 및 리스크 시각화 대시보드</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-3 py-1 bg-slate-100 border border-slate-300 text-slate-700 font-semibold rounded-full text-xs">
+        <i class="fa-solid fa-calculator text-slate-500 mr-1"></i> 원 단위 보존 &amp; 억 원 환산 표기
+      </span>
+    </div>
+  </div>
+
+  <!-- Dynamic Status & Briefing Summary Box -->
+  <div class="card brief">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-3">
+      <div class="flex items-center gap-2.5">
+        <span id="decisionStatusBadge" class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-500 text-white">
+          투자 가능 (Recommended)
+        </span>
+        <span class="text-xs text-slate-400 font-mono">자동 종합 투자 의사결정 브리핑</span>
+      </div>
+      <div class="text-xs text-slate-400">
+        위험 허용 입찰 상한: <strong id="headerCapDisplay" class="text-white font-mono text-base ml-1">146.47억 원</strong>
+      </div>
+    </div>
+    <p id="decisionBriefingText" class="text-sm text-slate-200 leading-relaxed font-normal">
+      계산 중...
+    </p>
+  </div>
+
+  <!-- Highlight Key Financial Metrics -->
+  <div class="grid-4 mb-6">
+    <div class="metric bg-white shadow-xs">
+      <span>당좌자산 (599.37억 원)</span>
+      <strong id="kQuick" class="font-mono text-slate-900">—</strong>
+    </div>
+    <div class="metric bg-white shadow-xs">
+      <span>규정상 최대 입찰가 (60%)</span>
+      <strong id="kMax" class="font-mono text-amber">—</strong>
+    </div>
+    <div class="metric bg-white shadow-xs">
+      <span>4분기 누적 원가 절감액 (S)</span>
+      <strong id="kSaveTotal" class="font-mono text-green">—</strong>
+    </div>
+    <div class="metric bg-white shadow-xs">
+      <span>직전 분기 순이익</span>
+      <strong id="kProfit" class="font-mono text-slate-900">—</strong>
+    </div>
+  </div>
+
+  <!-- Section 1 & Section 2: Inputs & Risk Tolerance Threshold Setup -->
+  <div class="grid-2 mb-6">
+    <!-- C사 기본 재무정보 & 입찰 입력 -->
+    <section class="card">
+      <div class="section-heading">
+        <h2>① 기업 정보 및 입찰 조건</h2>
+        <span>Input Parameters</span>
+      </div>
+      <div class="fields">
+        <div class="field">
+          <label for="quick">당좌자산 (원)</label>
+          <input id="quick" type="number" min="0" step="10000" value="59937129600">
+          <small id="quick_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="cost">현재 분기 제조원가 (원)</label>
+          <input id="cost" type="number" min="0" step="10000" value="72393695300">
+          <small id="cost_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="operating">분기 영업이익 (원)</label>
+          <input id="operating" type="number" step="10000" value="21695361504">
+          <small id="operating_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="profit">직전 분기 순이익 (원)</label>
+          <input id="profit" type="number" step="10000" value="17576510921">
+          <small id="profit_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="cash">현금 및 현금성자산 (원)</label>
+          <input id="cash" type="number" min="0" step="10000" value="0">
+          <small id="cash_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="debt">단기차입금 (원)</label>
+          <input id="debt" type="number" min="0" step="10000" value="2797233336">
+          <small id="debt_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="bid">검토 입찰금액 (원)</label>
+          <input id="bid" type="number" min="5000000000" step="10000000" value="15000000000">
+          <small id="bid_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="growth">분기 제조원가 증감률 (%)</label>
+          <input id="growth" type="number" min="-99" max="1000" step="0.5" value="0">
+        </div>
+        <div class="field">
+          <label for="discount">분기 할인율 (%)</label>
+          <input id="discount" type="number" min="0" max="100" step="0.1" value="0">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button id="maResetBtn" class="btn btn-dark"><i class="fa-solid fa-arrow-rotate-left"></i> 기본값 복원</button>
+        <button onclick="window.print()" class="btn btn-light"><i class="fa-solid fa-print"></i> 보고서 인쇄 / PDF</button>
+      </div>
+      <div id="validation" class="notice" role="status"></div>
+    </section>
+
+    <!-- 신규 기능 ①: 위험 허용 입찰금액 조건 설정 및 한도 결과 -->
+    <section class="card">
+      <div class="section-heading">
+        <h2>② 위험 허용 입찰금액 조건 설정 &amp; 분석</h2>
+        <span>Risk Tolerance Analysis</span>
+      </div>
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4 space-y-4">
+        <div class="field mb-2">
+          <label for="prob">
+            <span>1. 예상 낙찰 확률 (p)</span>
+            <span id="probBadge" class="font-bold text-slate-900 font-mono">60%</span>
+          </label>
+          <input id="prob" type="range" min="0" max="100" step="1" value="60" class="cursor-pointer accent-slate-900">
+        </div>
+
+        <div class="field mb-2">
+          <label for="lossLimitRatio">
+            <span>2. 실패 시 허용 손실 비율 (순이익 대비)</span>
+            <span id="lossRatioBadge" class="font-bold text-slate-900 font-mono">25%</span>
+          </label>
+          <input id="lossLimitRatio" type="range" min="1" max="100" step="1" value="25" class="cursor-pointer accent-slate-900">
+        </div>
+
+        <div class="field mb-0">
+          <label for="minReqEv">
+            <span>3. 최소 요구 기대이익 (M) (억 원)</span>
+            <span id="minEvBadge" class="font-bold text-slate-900 font-mono">30.00억 원</span>
+          </label>
+          <input id="minReqEv" type="number" min="0" step="1" value="30" class="bg-white">
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+          <span class="text-slate-600 font-medium">A. 경제적 손익분기 입찰액 (EV ≥ 0)</span>
+          <strong id="bevCapText" class="font-mono text-slate-900 text-sm">약 241.31억 원</strong>
+        </div>
+        <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+          <span class="text-slate-600 font-medium">B. 실패 손실 허용 입찰액 (순이익 대비 한도)</span>
+          <strong id="lossCapText" class="font-mono text-slate-900 text-sm">약 146.47억 원</strong>
+        </div>
+        <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+          <span class="text-slate-600 font-medium">C. 최소 기대이익 충족 입찰액 (EV ≥ M)</span>
+          <strong id="minEvCapText" class="font-mono text-slate-900 text-sm">약 199.64억 원</strong>
+        </div>
+        <div class="p-3 bg-slate-900 text-white rounded-lg flex justify-between items-center text-xs shadow-xs">
+          <span class="font-bold">D. 최종 위험 허용 입찰 상한 (Min Value)</span>
+          <strong id="finalMaxCapText" class="font-mono text-emerald-400 text-base font-extrabold">약 146.47억 원</strong>
+        </div>
+      </div>
+      <div id="capNotice" class="notice good mt-3"></div>
+    </section>
+  </div>
+
+  <!-- 신규 기능 ④: 입찰금액별 위험·수익 그래프 (Chart.js 커브) -->
+  <div class="card mb-6">
+    <div class="section-heading">
+      <h2>③ 입찰금액별 위험·수익 시각화 그래프 (Curve Analysis)</h2>
+      <span>Risk &amp; Return Curve Spectrum</span>
+    </div>
+    <div class="relative h-72 w-full">
+      <canvas id="riskReturnChart"></canvas>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+      <div class="flex flex-wrap gap-4">
+        <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-slate-900 inline-block"></span> 기대가치 (EV)</span>
+        <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-rose-600 inline-block"></span> 입찰 실패 손실 (30%)</span>
+        <span class="flex items-center gap-1.5"><span class="w-3 h-3 inline-block" style="background:rgba(22,163,74,.18)"></span> 허용 구간 (50억 ~ 위험 허용 상한)</span>
+        <span class="flex items-center gap-1.5"><span class="w-0.5 h-3 inline-block" style="background:#d97706"></span> 세로선: 현재 입찰가 · 손익분기 · 상한</span>
+      </div>
+      <span>* 그래프 위 마우스를 올리면 입찰금액별 기대가치 및 손실액을 확인할 수 있습니다.</span>
+    </div>
+  </div>
+
+  <!-- 신규 기능 ②: 검토 입찰금액 세부 투자 판단 카드 & 메트릭 -->
+  <div class="card mb-6">
+    <div class="section-heading">
+      <h2>④ 선택된 검토 입찰금액 세부 투자 판단</h2>
+      <span>Detailed Investment Evaluation</span>
+    </div>
+    <div class="grid-3 mb-4">
+      <div class="metric bg-white">
+        <span>성공 시 4분기 누적 원가 절감액</span>
+        <strong id="mSaveTotal" class="text-green font-mono">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>성공 시 단순 순회수액 (절감액 - 입찰액)</span>
+        <strong id="mNetReturn" class="font-mono">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>투자금 단순 회수기간</span>
+        <strong id="mPaybackPeriod" class="font-mono text-slate-900">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>실패 시 기타비용 발생액 (30%)</span>
+        <strong id="mLossCost" class="text-red font-mono">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>실패 비용의 순이익 대비 비율</span>
+        <strong id="mLossRatio" class="font-mono text-slate-900">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>단순 기대가치 (EV)</span>
+        <strong id="mEvValue" class="font-mono">—</strong>
+      </div>
+      <div class="metric bg-white">
+        <span>손익분기 최소 낙찰 확률 (BEP p)</span>
+        <strong id="mBevProb" class="font-mono text-slate-900">—</strong>
+      </div>
+    </div>
+
+    <div class="grid-3 gap-3 text-xs">
+      <div id="checkRuleCap" class="p-3 rounded-lg border bg-slate-50 flex items-center justify-between">
+        <span class="font-medium">규정상 입찰 범위 (50억 ~ 60% 한도)</span>
+        <strong class="status-icon text-slate-900">확인중</strong>
+      </div>
+      <div id="checkRuleEv" class="p-3 rounded-lg border bg-slate-50 flex items-center justify-between">
+        <span class="font-medium">최소 요구 기대이익 (EV ≥ M) 충족</span>
+        <strong class="status-icon text-slate-900">확인중</strong>
+      </div>
+      <div id="checkRuleLoss" class="p-3 rounded-lg border bg-slate-50 flex items-center justify-between">
+        <span class="font-medium">실패 손실 허용 기준 충족</span>
+        <strong class="status-icon text-slate-900">확인중</strong>
+      </div>
+    </div>
+    <div id="liquidity" class="notice mt-4"></div>
+  </div>
+
+  <!-- 기존 ⑤ 분기별 회수 현황 표 유지 -->
+  <div class="card mb-6">
+    <div class="section-heading">
+      <h2>⑤ 분기별 원가절감 및 회수 현황</h2>
+      <span>Quarterly Breakdown</span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>분기</th>
+            <th>제조원가</th>
+            <th>절감액 (10%)</th>
+            <th>누적 절감액</th>
+            <th>누적 − 입찰액 (Net Cash)</th>
+          </tr>
+        </thead>
+        <tbody id="quarterRows"></tbody>
+      </table>
+    </div>
+    <p class="note">절감액의 실제 현금 유입 시점은 운전자본 및 재고 회수 조건에 따라 상이할 수 있습니다.</p>
+  </div>
+
+  <!-- 분기별 누적 원가절감 BEP 돌파 차트 -->
+  <div class="card mb-6">
+    <div class="section-heading">
+      <h2>⑤-2 분기별 누적 원가절감액 vs 입찰금액 (단순 BEP 추이)</h2>
+      <span>Quarterly Payback &amp; BEP</span>
+    </div>
+    <div class="relative h-60 w-full">
+      <canvas id="quarterlyBepChart"></canvas>
+    </div>
+    <p class="note">* 누적 원가 절감액 선이 현재 검토 입찰금액 기준선을 상회하는 시점이 단순 투자금 회수(BEP) 분기입니다.</p>
+  </div>
+
+  <!-- 신규 기능 ⑤: 경쟁사 입찰 시나리오 연계 분석 -->
+  <div class="grid-2 mb-6">
+    <section class="card">
+      <div class="section-heading">
+        <h2>⑥ 경쟁사 입찰 예상 시나리오</h2>
+        <span>Competitor Scenario Analysis</span>
+      </div>
+      <div class="fields">
+        <div class="field">
+          <label for="aBid">A사 예상 입찰액 (원)</label>
+          <input id="aBid" type="number" min="0" step="100000000" value="18000000000">
+          <small id="aBid_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="bBid">B사 예상 입찰액 (원)</label>
+          <input id="bBid" type="number" min="0" step="100000000" value="16000000000">
+          <small id="bBid_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="dBid">D사 예상 입찰액 (원)</label>
+          <input id="dBid" type="number" min="0" step="100000000" value="10000000000">
+          <small id="dBid_preview" class="counter text-slate-500 font-mono"></small>
+        </div>
+        <div class="field">
+          <label for="rank">C사 동률 우선순위 조건</label>
+          <select id="rank">
+            <option value="current">주가 순위 적용 (A &gt; C &gt; D &gt; B)</option>
+            <option value="unknown">전 분기 순위 미확인</option>
+          </select>
+        </div>
+      </div>
+      <div id="competition" class="notice"></div>
+      <p class="note">* 경쟁사 예상 입찰액은 확정 수치가 아닌 사용자 입력 가정 시나리오입니다.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-heading">
+        <h2>⑦ 입찰가별 감도 분석 표</h2>
+        <span>Sensitivity Matrix</span>
+      </div>
+      <div id="recommendation" class="summary-box"></div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>입찰안</th>
+              <th>회수분기</th>
+              <th>실패 손실</th>
+              <th>4분기 순회수</th>
+              <th>기대가치*</th>
+            </tr>
+          </thead>
+          <tbody id="options"></tbody>
+        </table>
+      </div>
+      <p class="note">* 모든 입찰안에 동일한 사용자 설정 낙찰 확률을 적용한 결과입니다. 기대가치는 분기 할인율을 반영한 절감액 기준입니다(할인율 0%면 단순 합계와 동일).</p>
+    </section>
+  </div>
+
+  <!-- 항목 8: 회계 및 재무적 주의사항 명시 -->
+  <section class="card">
+    <div class="section-heading">
+      <h2>⑧ 회계 및 재무적 유의사항 (Important Disclaimers)</h2>
+      <span>Risk Disclaimers</span>
+    </div>
+    <div class="grid-2 text-xs text-slate-700 gap-4 space-y-0">
+      <div class="space-y-2.5">
+        <p>1. <strong>제조원가 절감액 현금흐름 미동일:</strong> 원가 절감액은 손익계산서상 매출원가 감소 효과이며, 실제 현금 유입 시점과는 차이가 발생할 수 있습니다.</p>
+        <p>2. <strong>손익 반영 시점 차이:</strong> 원가 절감 효과는 제품 생산 및 재고 판매 시점에 따라 순차적으로 인식됩니다.</p>
+        <p>3. <strong>무형자산 자산화 처리:</strong> 낙찰 성공 시 특허권은 무형자산으로 자산화되며 전액 당기비용 처리되지 않습니다.</p>
+        <p>4. <strong>투자회수와 순이익 구분:</strong> 단순 순회수액 지표는 투자금 회수 평가용이며 회계상 최종 순이익과 다릅니다.</p>
+        <p>5. <strong>상각 규칙 미확정:</strong> 특허권 잔존가치 및 정밀 감가상각 내용연수가 확정되지 않았습니다.</p>
+      </div>
+      <div class="space-y-2.5">
+        <p>6. <strong>유동성 조달 검토 필수:</strong> C사의 보유 현금이 0원이므로 단기차입 등 외부 자금 조달 및 이자비용 발생에 관한 별도 검토가 수반되어야 합니다.</p>
+        <p>7. <strong>실패시 정산 조건:</strong> 입찰 실패 시 30% 손실 비용 발생 규칙 외 나머지 70% 현금 정산 방식 및 환급 시기는 미확인 상태입니다.</p>
+        <p>8. <strong>가정 확률 사용:</strong> 낙찰 확률(p)은 통계 추정치가 아닌 사용자의 시나리오 설정값입니다.</p>
+        <p>9. <strong>위험 허용 상한 의미:</strong> 위험 허용 입찰 상한은 설정 조건을 만족하는 위험 통제 한도일 뿐 낙찰을 보장하는 최적 금액이 아닙니다.</p>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- STRATEGY REPORT PAGE -->
+<section id="page-strategic" class="page">
+<div class="card">
+  <div class="section-heading"><h2>전략적 의사결정 시뮬레이터</h2><span>Strategic Decision Simulator</span></div>
+  <p class="help">C기업 5차년도 1분기 손익계산서·재무상태표 기준 · 금액 단위: 억 원. 투자 전 실적을 기준으로, 투자했을 때 이번 분기 재무비율과 누적 손익이 어떻게 바뀌는지 계산합니다.</p>
+  <h3 class="font-bold text-sm text-slate-900 mt-4 mb-3">① 기준 재무정보</h3>
+  <div class="grid-4">
+    <div class="field"><label for="sd-cash">보유현금</label><input id="sd-cash" type="number" step="any" min="0" value="135.10"></div>
+    <div class="field"><label for="sd-quick">당좌자산</label><input id="sd-quick" type="number" step="any" min="0" value="650.05"></div>
+    <div class="field"><label for="sd-rev">분기 매출액</label><input id="sd-rev" type="number" step="any" min="0" value="1262.50"></div>
+    <div class="field"><label for="sd-profit">분기 영업이익</label><input id="sd-profit" type="number" step="any" value="150.71"></div>
+    <div class="field"><label for="sd-ni">분기 당기순이익</label><input id="sd-ni" type="number" step="any" value="150.04"></div>
+    <div class="field"><label for="sd-equity">자본총계</label><input id="sd-equity" type="number" step="any" min="0" value="1029.98"></div>
+    <div class="field"><label for="sd-debt">부채총계 (유동부채)</label><input id="sd-debt" type="number" step="any" min="0" value="0"></div>
+    <div class="field"><label for="sd-mfg">당분기 제조원가 (참고)</label><input id="sd-mfg" type="number" step="any" min="0" value="720.79"></div>
+    <div class="field"><label for="sd-log">분기 물류비</label><input id="sd-log" type="number" step="any" min="0" value="40.82"></div>
+    <div class="field"><label for="sd-mat">분기 재료비</label><input id="sd-mat" type="number" step="any" min="0" value="" placeholder="미확인 · 재무제표에 따로 없음"></div>
+    <div class="field"><label for="sd-margin">추가 매출 공헌이익률 (%)</label><input id="sd-margin" type="number" step="any" min="0" max="100" value="49.73"></div>
+    <div class="field"><label for="sd-n">효과 지속 분기</label><input id="sd-n" type="number" step="1" min="1" value="4"></div>
+    <div class="field"><label for="sd-reserve">최소 현금 보유 목표</label><input id="sd-reserve" type="number" step="any" min="0" value="50"></div>
+    <div class="field"><label for="sd-borrow">현금 부족 시 차입</label><select id="sd-borrow"><option value="0">차입 안 함 (부족하면 실행 불가)</option><option value="1">단기차입으로 부족분 조달</option></select></div>
+    <div class="field"><label for="sd-rate">단기차입 분기 이자율 (%)</label><input id="sd-rate" type="number" step="any" min="0" value="3.07"></div>
+  </div>
+  <p class="help">공헌이익률 기본값은 매출총이익률(627.79 ÷ 1,262.50)로 대신한 값이라, 광고·판촉·물류처럼 매출에 따라 늘어나는 비용이 있으면 실제보다 높게 잡힙니다. 이자율 3.07%는 전기 단기차입 27.97억에 붙은 이자 0.86억으로 추정한 값입니다. 재료비는 제조원가 720.79억 안에 섞여 있어 따로 확인이 필요합니다.</p>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>② 등급 상승 효과 → 금액 환산</h2><span>Grade-to-Money</span></div>
+  <p class="help">1등급이 바뀌면 분기 매출이 몇 % 변하는지 입력합니다. 모르면 비워두세요. 비워두면 ⑥ 표의 '본전 조건' 칸에 투자가 본전이 되는 최소 %가 표시됩니다.</p>
+  <div class="grid-3">
+    <div class="field"><label for="sd-tpct">신제품 모델 번호 1등급당 분기 매출 증가율 (%)</label><input id="sd-tpct" type="number" step="any" placeholder="미확인"></div>
+    <div class="field"><label for="sd-spct">영업직원 생산성 1등급당 분기 매출 증가율 (%)</label><input id="sd-spct" type="number" step="any" placeholder="미확인"></div>
+    <div class="field"><label for="sd-dpct">유통매장 생산성 1등급당 분기 매출 증가율 (%)</label><input id="sd-dpct" type="number" step="any" placeholder="미확인"></div>
+  </div>
+  <label class="flex items-center gap-2 text-xs font-medium" style="justify-content:flex-start"><input id="sd-unk0" type="checkbox" checked style="width:auto"> 모르는 효과는 0으로 보고 조합 비교하기 (보수적 · 끄면 효과를 모르는 조합은 순위에서 빠짐)</label>
+  <div id="sd-v1" class="note"></div>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>③ CFO 부품 선물 입찰</h2><span>Bid Scenario</span></div>
+  <div class="grid-3">
+    <div class="field"><label for="sd-bid">C사 입찰금액</label><input id="sd-bid" type="number" step="any" min="40" value="40"></div>
+    <div class="field"><label for="sd-pmode">낙찰 확률 산정 방식</label><select id="sd-pmode"><option value="comp">경쟁사 예상 입찰가로 판정</option><option value="manual">확률 직접 입력</option></select></div>
+    <div class="field"><label for="sd-prob">낙찰 확률 (%) · 직접 입력 시</label><input id="sd-prob" type="number" step="any" min="0" max="100" placeholder="미확인"></div>
+    <div class="field"><label for="sd-abid">경쟁사 1 예상 입찰가</label><input id="sd-abid" type="number" step="any" min="0" placeholder="미입력"></div>
+    <div class="field"><label for="sd-bbid">경쟁사 2 예상 입찰가</label><input id="sd-bbid" type="number" step="any" min="0" placeholder="미입력"></div>
+    <div class="field"><label for="sd-dbid">경쟁사 3 예상 입찰가</label><input id="sd-dbid" type="number" step="any" min="0" placeholder="미입력"></div>
+    <div class="field"><label for="sd-tie">동률 시 (전기 주가 → 영업이익 순)</label><select id="sd-tie"><option value="u">순위 미확인 (50%로 계산)</option><option value="c">C사가 우선</option><option value="o">경쟁사가 우선</option></select></div>
+    <div class="field"><label for="sd-acct">낙찰 시 입찰금 회계 처리</label><select id="sd-acct"><option value="expense">당기 비용 (보수적)</option><option value="asset">자산 처리 (이번 분기 비용 아님)</option></select></div>
+  </div>
+  <div id="sd-bidinfo" class="notice"></div>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>④ 투자 조합 선택 &amp; 판단 기준</h2><span>Decision Portfolio</span></div>
+  <div class="grid-3">
+    <div class="field"><label for="sd-tech">CEO · 원천 기술</label><select id="sd-tech"><option value="0">미도입</option><option value="50">기술 A · 50억 / +1등급 60%, 실패 40%</option><option value="150">기술 B · 150억 / +1등급 80%, +2등급 20%</option></select></div>
+    <div class="field"><label for="sd-crm">CMO · CRM / 20억 / 성공 70%</label><select id="sd-crm"><option value="0">미실행</option><option value="1" selected>실행</option></select></div>
+    <div class="field"><label for="sd-scm">COO · SCM / 20억 / 성공 80%</label><select id="sd-scm"><option value="0">미실행</option><option value="1" selected>실행</option></select></div>
+    <div class="field"><label for="sd-hr">CHO · 조직문화 / 20억 / 성공 50%, 무효 20%, 역효과 30%</label><select id="sd-hr"><option value="0">미실행</option><option value="1">실행</option></select></div>
+    <div class="field"><label for="sd-cf">CFO · 부품 선물 입찰</label><select id="sd-cf"><option value="0">미실행</option><option value="1">실행</option></select></div>
+    <div class="field"><label for="sd-crit">추천 기준</label><select id="sd-crit"><option value="ev">기대 순손익 최대</option><option value="loss">손실 확률 제한 안에서 기대 순손익 최대</option><option value="oi">최악이어도 이번 분기 영업이익 흑자 유지</option></select></div>
+    <div class="field"><label for="sd-maxloss">허용 손실 확률 (%) · 손실 확률 기준일 때</label><input id="sd-maxloss" type="number" step="any" min="0" max="100" value="30"></div>
+  </div>
+  <div class="flex gap-2 flex-wrap">
+    <button class="btn btn-blue" type="button" onclick="sdApplyBest()"><i class="fa-solid fa-wand-magic-sparkles"></i> 정량 추천 조합 적용</button>
+    <button class="btn btn-light" type="button" onclick="sdClear()">전체 미선택</button>
+  </div>
+  <div id="sd-reason" class="summary-box" style="margin-top:14px;margin-bottom:0"></div>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>⑤ 선택 조합의 재무 영향</h2><span>Pro-forma Ratios</span></div>
+  <div id="sd-metrics" class="grid-4"></div>
+  <div id="sd-warning" class="notice"></div>
+  <div class="tablewrap" style="margin-top:16px"><table><thead><tr><th>지표 (이번 분기)</th><th>투자 전</th><th>투자 후 · 기대</th><th>투자 후 · 최악</th></tr></thead><tbody id="sd-ratios"></tbody></table></div>
+  <p class="note">이 게임의 손익계산서에서는 연구개발비, 혁신 추진비, 기타비용이 모두 판매관리비 안에 있으므로, 투자비는 성공이든 실패든 이번 분기 영업이익을 줄입니다. 효과는 원문대로 CRM·SCM·조직문화·부품 입찰은 이번 분기부터 반영하고, 원천 기술은 신제품이 나온 뒤에 효과가 나므로 이번 분기에는 비용만 반영합니다. 차입 이자는 영업외비용이라 순이익에만 반영합니다. 법인세 변화와 영업활동 현금 유입은 반영하지 않았습니다.</p>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>⑥ 투자별 확률·손익 분석</h2><span>Risk &amp; Return · 억 원</span></div>
+  <div class="tablewrap"><table><thead><tr><th>항목</th><th>투자액</th><th>결과별 확률 / 누적 순손익</th><th>기대 순손익</th><th>최악 손익</th><th>손실 확률</th><th>이번 분기 영업이익 영향 (기대)</th><th>본전 조건</th></tr></thead><tbody id="sd-detail"></tbody></table></div>
+  <p class="help" style="margin-top:10px">누적 순손익 = 효과 지속 기간 동안의 공헌이익 또는 비용 절감액 − 투자비 (세전, 할인 미적용). 모델 번호가 +2등급이면 +1등급 효과의 두 배로 가정했습니다. 조직문화 역효과는 영업직원 생산성 −1등급입니다.</p>
+</div>
+
+<div class="card">
+  <div class="section-heading"><h2>⑦ 조합별 비교</h2><span>Portfolio Analysis</span></div>
+  <p class="help">48개 조합(기술 3가지 × 나머지 4개 투자 실행 여부)을 모두 계산하고, 현금 조건을 만족하는 조합 중 추천 기준에 맞는 상위 조합을 보여줍니다. 각 투자의 성공·실패는 서로 독립이고 효과는 단순 합산된다고 가정했습니다.</p>
+  <div class="tablewrap"><table><thead><tr><th>조합</th><th>최대 자금 부담</th><th>필요 차입</th><th>잔여현금 (최악)</th><th>기대 순손익</th><th>최악 순손익</th><th>손실 확률</th><th>최악 시 이번 분기 영업이익</th></tr></thead><tbody id="sd-combos"></tbody></table></div>
+  <p id="sd-selected" class="note"></p>
+</div>
+</section>
+
+<section id="page-report" class="page">
+  <div class="card max-w-4xl mx-auto">
+    <div class="report-header flex flex-wrap justify-between items-end gap-4">
+      <div>
+        <h1 id="reportProjectTitle" class="text-2xl font-bold text-slate-900">통합 마케팅 전략 보고서</h1>
+        <p id="reportBrandTitle" class="text-slate-500 text-sm mt-1">브랜드: 미설정</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn btn-dark" onclick="exportReportToMarkdown()">
+          <i class="fa-solid fa-file-lines"></i> 마케팅 전략 마크다운(.md) 저장
+        </button>
+        <button class="btn btn-blue" onclick="window.print()">
+          <i class="fa-solid fa-print"></i> 보고서 인쇄 / PDF 저장
+        </button>
+      </div>
+    </div>
+
+    <div id="reportContent" class="space-y-6 text-sm text-slate-800">
+      <!-- Generated via JS -->
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+</div>
+
+<!-- RECORD DETAIL MODAL -->
+<div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl transition-all scale-95 opacity-0" id="modalCard">
+    <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+      <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-slate-900"></i> 레코드 상세 내역
+      </h3>
+      <button id="closeModalBtn" class="text-slate-400 hover:text-slate-900 p-1 rounded-lg hover:bg-slate-200">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div id="modalBody" class="p-5 max-h-[70vh] overflow-y-auto space-y-2 font-mono text-xs text-slate-700"></div>
+    <div class="p-3 bg-slate-50 border-t border-slate-200 text-right">
+      <button id="closeModalFooterBtn" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-medium">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   STATE MANAGEMENT & APPLICATION LOGIC
+   ========================================================================== */
+
+const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQKG71b389GiIpr9YXn6p6EeeXg0DyhTiGZjre4jvq6jHA3FYRSQjqdC_zNGgpBU1Bt9dpn4JObp-yL/pub?output=csv";
+
+let liveState = {
+  csvUrl: DEFAULT_CSV_URL,
+  rawData: [],
+  filteredData: [],
+  headers: [],
+  numericColumns: [],
+  categoricalColumns: [],
+  columnChartTypes: {},
+  selectedXAxis: '',
+  selectedYAxis: '',
+  focusChartType: 'bar',
+  autoRefreshInterval: 15,
+  timerId: null,
+  currentPage: 1,
+  pageSize: 25,
+  sortColumn: null,
+  sortAscending: true,
+  searchQuery: '',
+  filterCategory: '',
+  lastUpdated: null
+};
+
+let hubState = {
+  projectName: '',
+  brandName: '',
+  competitors: [
+    { name: '경쟁사 A', x: 30, y: 40 },
+    { name: '경쟁사 B', x: 80, y: 30 }
+  ]
+};
+
+const maDefaults = {
+  quick: 59937129600,
+  cost: 72393695300,
+  operating: 21695361504,
+  profit: 17576510921,
+  cash: 0,
+  debt: 2797233336,
+  bid: 15000000000,
+  growth: 0,
+  discount: 0,
+  prob: 60,
+  lossLimitRatio: 25,
+  minReqEv: 30,
+  aBid: 18000000000,
+  bBid: 16000000000,
+  dBid: 10000000000,
+  rank: 'current'
+};
+
+let focusChartInstance = null;
+let columnChartInstances = {};
+let riskReturnChartInstance = null;
+let quarterlyBepChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initHubEventListeners();
+  initLiveDashboardEventListeners();
+  initMaCalculator();
+  syncProjectHeader();
+  updateCounters();
+  updateProgress();
+  updatePreviews();
+  loadFromLocalStorage();
+  fetchData();
+  setupAutoRefresh();
+  renderMap();
+});
+
+// Navigation Page Switcher
+function showPage(pageId) {
+  document.querySelectorAll('.nav button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-page') === pageId);
+  });
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === `page-${pageId}`);
+  });
+  const navBtn = document.querySelector(`.nav button[data-page="${pageId}"]`);
+  const titleEl = document.getElementById('topbarTitle');
+  if (navBtn && titleEl) titleEl.textContent = navBtn.textContent.trim();
+  window.scrollTo({ top: 0 });
+
+  if (pageId === 'report') renderReport();
+  if (pageId === 'ma-calc') calculateMa();
+  if (pageId === 'live-dashboard') {
+    setTimeout(() => {
+      renderInteractiveFocusChart();
+      renderAllColumnsGrid();
+    }, 100);
+  }
+}
+
+function initHubEventListeners() {
+  document.querySelectorAll('input, textarea').forEach(elem => {
+    elem.addEventListener('input', () => {
+      updateCounters();
+      updateProgress();
+      updatePreviews();
+      syncProjectHeader();
+    });
+  });
+
+  ['ownX', 'ownY', 'xLeft', 'xRight', 'yBottom', 'yTop', 'brandName'].forEach(id => {
+    document.getElementById(id).addEventListener('input', drawMap);
+  });
+}
+
+function syncProjectHeader() {
+  const pName = document.getElementById('projectName').value.trim() || '새 마케팅 프로젝트';
+  const bName = document.getElementById('brandName').value.trim() || '브랜드 미설정';
+
+  document.getElementById('headerProject').textContent = pName;
+  document.getElementById('headerBrand').textContent = bName;
+  document.getElementById('dashboardProject').textContent = pName;
+  document.getElementById('ownBrandName').value = bName;
+
+  document.querySelectorAll('.mirror-project').forEach(el => el.value = pName);
+  document.querySelectorAll('.mirror-brand').forEach(el => el.value = bName);
+}
+
+function updateCounters() {
+  document.querySelectorAll('[data-counter]').forEach(span => {
+    const targetId = span.getAttribute('data-counter');
+    const input = document.getElementById(targetId);
+    if (input) {
+      span.textContent = `${input.value.length}자`;
+    }
+  });
+}
+
+function updateProgress() {
+  const stpFields = document.querySelectorAll('[data-stp]');
+  let stpFilled = 0;
+  stpFields.forEach(f => { if (f.value.trim().length > 0) stpFilled++; });
+  const stpPercent = Math.round((stpFilled / (stpFields.length || 1)) * 100);
+
+  const fourpFields = document.querySelectorAll('[data-fourp]');
+  let fourpFilled = 0;
+  fourpFields.forEach(f => { if (f.value.trim().length > 0) fourpFilled++; });
+  const fourpPercent = Math.round((fourpFilled / (fourpFields.length || 1)) * 100);
+
+  const totalPercent = Math.round((stpPercent + fourpPercent) / 2);
+
+  document.getElementById('stpProgressText').textContent = `${stpPercent}%`;
+  document.getElementById('stpProgressBar').style.width = `${stpPercent}%`;
+
+  document.getElementById('fourpProgressText').textContent = `${fourpPercent}%`;
+  document.getElementById('fourpProgressBar').style.width = `${fourpPercent}%`;
+
+  document.getElementById('totalProgressText').textContent = `${totalPercent}%`;
+  document.getElementById('totalProgressBar').style.width = `${totalPercent}%`;
+}
+
+function updatePreviews() {
+  const stpPreview = document.getElementById('stpPreview');
+  const fourpPreview = document.getElementById('fourpPreview');
+
+  const pName = document.getElementById('projectName').value || '프로젝트 미정';
+  const bName = document.getElementById('brandName').value || '브랜드 미정';
+
+  // STP Preview
+  stpPreview.innerHTML = `
+    <div class="preview-label">Live Preview</div>
+    <div class="preview-title">${pName}</div>
+    <div class="preview-brand">${bName}</div>
+    <div class="preview-block">
+      <h3>STP Summary</h3>
+      <div class="preview-item"><strong>Primary Target:</strong><div>${document.getElementById('primaryTarget').value || '미작성'}</div></div>
+      <div class="preview-item"><strong>Positioning:</strong><div>${document.getElementById('positioningStatement').value || '미작성'}</div></div>
+      <div class="preview-item"><strong>POD:</strong><div>${document.getElementById('pod').value || '미작성'}</div></div>
+    </div>
+  `;
+
+  // 4P Preview
+  fourpPreview.innerHTML = `
+    <div class="preview-label">Live Preview</div>
+    <div class="preview-title">${pName}</div>
+    <div class="preview-brand">${bName}</div>
+    <div class="preview-block">
+      <h3>4P Summary</h3>
+      <div class="preview-item"><strong>Value Prop:</strong><div>${document.getElementById('valueProposition').value || '미작성'}</div></div>
+      <div class="preview-item"><strong>Product:</strong><div>${document.getElementById('productCore').value || '미작성'}</div></div>
+      <div class="preview-item"><strong>Price:</strong><div>${document.getElementById('priceLevel').value || '미작성'}</div></div>
+    </div>
+  `;
+
+  // Sync references
+  document.getElementById('fourpTargetReference').textContent = document.getElementById('primaryTarget').value || 'STP에서 Primary Target을 먼저 작성해 주세요.';
+  document.getElementById('fourpPositionReference').textContent = document.getElementById('positioningStatement').value || 'STP에서 Positioning Statement를 먼저 작성해 주세요.';
+}
+
+function addCompetitor() {
+  const count = hubState.competitors.length + 1;
+  hubState.competitors.push({ name: `경쟁사 ${String.fromCharCode(64 + count)}`, x: 50, y: 50 });
+  renderMap();
+}
+
+function escHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
+function clampCoord(v, fallback) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : fallback;
+}
+
+function updateCompetitor(idx, key, value) {
+  if (!hubState.competitors[idx]) return;
+  hubState.competitors[idx][key] = key === 'name' ? value : clampCoord(value, 0);
+  drawMap();
+}
+
+function removeCompetitor(idx) {
+  hubState.competitors.splice(idx, 1);
+  renderMap();
+}
+
+function renderMap() {
+  renderCompetitorList();
+  drawMap();
+}
+
+// 경쟁사 입력칸 목록 (추가/삭제/불러오기 때만 다시 만듦 → 입력 중 포커스 유지)
+function renderCompetitorList() {
+  const listContainer = document.getElementById('competitorList');
+  if (!listContainer) return;
+  listContainer.innerHTML = '';
+  hubState.competitors.forEach((c, idx) => {
+    const row = document.createElement('div');
+    row.className = 'competitor-row';
+    row.innerHTML = `
+      <input value="${escHtml(c.name)}" oninput="updateCompetitor(${idx}, 'name', this.value)">
+      <input type="number" min="0" max="100" value="${escHtml(c.x)}" oninput="updateCompetitor(${idx}, 'x', this.value)">
+      <input type="number" min="0" max="100" value="${escHtml(c.y)}" oninput="updateCompetitor(${idx}, 'y', this.value)">
+      <button class="btn btn-red p-1 text-xs" onclick="removeCompetitor(${idx})"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    listContainer.appendChild(row);
+  });
+}
+
+function drawMap() {
+  const svg = document.getElementById('positioningMap');
+  if (!svg) return;
+
+  const xL = escHtml(document.getElementById('xLeft').value || 'X 좌');
+  const xR = escHtml(document.getElementById('xRight').value || 'X 우');
+  const yB = escHtml(document.getElementById('yBottom').value || 'Y 하');
+  const yT = escHtml(document.getElementById('yTop').value || 'Y 상');
+
+  const ownName = escHtml(document.getElementById('brandName').value.trim() || '자사 브랜드');
+  const ownX = clampCoord(document.getElementById('ownX').value, 50);
+  const ownY = clampCoord(document.getElementById('ownY').value, 50);
+
+  let html = `
+    <line x1="50" y1="250" x2="650" y2="250" stroke="#cbd5e1" stroke-width="2"/>
+    <line x1="350" y1="50" x2="350" y2="450" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="50" y="270" fill="#64748b" font-size="12" font-weight="bold">${xL}</text>
+    <text x="650" y="270" fill="#64748b" font-size="12" font-weight="bold" text-anchor="end">${xR}</text>
+    <text x="360" y="445" fill="#64748b" font-size="12" font-weight="bold">${yB}</text>
+    <text x="360" y="65" fill="#64748b" font-size="12" font-weight="bold">${yT}</text>
+  `;
+  hubState.competitors.forEach(c => {
+    const cx = 50 + (clampCoord(c.x, 0) * 6);
+    const cy = 450 - (clampCoord(c.y, 0) * 4);
+    html += `
+      <circle cx="${cx}" cy="${cy}" r="7" fill="#64748b" stroke="#ffffff" stroke-width="1.5"/>
+      <text x="${cx + 12}" y="${cy + 4}" fill="#475569" font-size="11">${escHtml(c.name)}</text>
+    `;
+  });
+  html += `
+    <circle cx="${50 + (ownX * 6)}" cy="${450 - (ownY * 4)}" r="10" fill="#0f172a" stroke="#ffffff" stroke-width="2"/>
+    <text x="${50 + (ownX * 6) + 14}" y="${450 - (ownY * 4) + 4}" fill="#0f172a" font-size="13" font-weight="800">${ownName}</text>
+  `;
+  svg.innerHTML = html;
+}
+
+/* ==========================================================================
+   M&A CALCULATOR LOGIC & ENHANCED RISK DECISION SYSTEM
+   ========================================================================== */
+function initMaCalculator() {
+  Object.keys(maDefaults).forEach(id => {
+    const elem = document.getElementById(id);
+    if (elem) elem.addEventListener('input', calculateMa);
+  });
+
+  const probSlider = document.getElementById('prob');
+  if (probSlider) {
+    probSlider.addEventListener('input', (e) => {
+      document.getElementById('probBadge').textContent = `${e.target.value}%`;
+      calculateMa();
+    });
+  }
+
+  const lossSlider = document.getElementById('lossLimitRatio');
+  if (lossSlider) {
+    lossSlider.addEventListener('input', (e) => {
+      document.getElementById('lossRatioBadge').textContent = `${e.target.value}%`;
+      calculateMa();
+    });
+  }
+
+  const minEvInput = document.getElementById('minReqEv');
+  if (minEvInput) {
+    minEvInput.addEventListener('input', (e) => {
+      document.getElementById('minEvBadge').textContent = `${parseFloat(e.target.value || 0).toFixed(2)}억 원`;
+      calculateMa();
+    });
+  }
+
+  const resetBtn = document.getElementById('maResetBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      Object.entries(maDefaults).forEach(([id, v]) => {
+        const elem = document.getElementById(id);
+        if (elem) elem.value = v;
+      });
+      document.getElementById('probBadge').textContent = `${maDefaults.prob}%`;
+      document.getElementById('lossRatioBadge').textContent = `${maDefaults.lossLimitRatio}%`;
+      document.getElementById('minEvBadge').textContent = `${maDefaults.minReqEv.toFixed(2)}억 원`;
+      calculateMa();
+    });
+  }
+
+  calculateMa();
+}
+
+function formatWonToBillionStr(wonValue, digits = 2) {
+  if (!Number.isFinite(wonValue)) return '—';
+  const billVal = wonValue / 100000000;
+  return `${billVal.toLocaleString('ko-KR', { maximumFractionDigits: digits, minimumFractionDigits: digits })}억 원`;
+}
+
+function updateInputPreviews() {
+  const fields = ['quick', 'cost', 'operating', 'profit', 'cash', 'debt', 'bid', 'aBid', 'bBid', 'dBid'];
+  fields.forEach(id => {
+    const val = Number(document.getElementById(id)?.value || 0);
+    const prevElem = document.getElementById(`${id}_preview`);
+    if (prevElem) {
+      prevElem.textContent = `≒ ${formatWonToBillionStr(val, 2)}`;
+    }
+  });
+}
+
+function calculateMa() {
+  updateInputPreviews();
+
+  const getNum = id => Number(document.getElementById(id)?.value || 0);
+  const money = n => formatWonToBillionStr(n, 2);
+  const sign = n => (n > 0 ? '+' : '') + money(n);
+
+  const quick = getNum('quick');
+  const cost = getNum('cost');
+  const profit = getNum('profit');
+  const bid = getNum('bid');
+  const growth = getNum('growth') / 100;
+  const discount = getNum('discount') / 100;
+  const prob = getNum('prob') / 100; // p (0~1)
+  const lossRatio = getNum('lossLimitRatio') / 100; // 허용 손실 비율
+  const minReqEvWon = getNum('minReqEv') * 100000000; // M (원)
+  const cash = getNum('cash');
+  
+  const maxLegalCap = quick * 0.6; // 규정상 최대 입찰액 (당좌자산 60%)
+  const minBidAllowed = 5000000000; // 최소 입찰금액 (50억 원)
+
+  const invalid = !['quick', 'cost', 'operating', 'profit', 'cash', 'debt', 'bid', 'growth', 'discount', 'prob', 'lossLimitRatio', 'minReqEv', 'aBid', 'bBid', 'dBid'].every(id => {
+    const el = document.getElementById(id);
+    return el && el.value !== '' && Number.isFinite(Number(el.value));
+  }) || quick < 0 || cost < 0 || cash < 0 || getNum('debt') < 0 || growth <= -1 || discount < 0 || prob < 0 || prob > 1 || lossRatio < 0 || [getNum('aBid'), getNum('bBid'), getNum('dBid')].some(v => v < 0);
+
+  // 4분기 누적 원가 절감액 (S) 및 단순 PV 계산
+  let rows = [], cumulativeSave = 0, pvSave = 0;
+  for (let i = 0; i < 4; i++) {
+    const c = cost * Math.pow(1 + growth, i);
+    const s = c * 0.1;
+    cumulativeSave += s;
+    pvSave += s / Math.pow(1 + discount, i + 1);
+    rows.push({ c, s, cumulative: cumulativeSave });
+  }
+
+  // EV 계산용 절감액: 할인율 반영 현재가치 (할인율 0%면 단순 누적액과 동일)
+  const evSave = pvSave;
+
+  // A. 경제적 손익분기 입찰금액: B = p * S / (0.3 + 0.7 * p)
+  let bevCapWon = 0;
+  if (prob > 0) {
+    bevCapWon = (prob * evSave) / (0.3 + 0.7 * prob);
+  } else {
+    bevCapWon = 0; // 확률 0% 일 경우 기대가치 생성 불가
+  }
+
+  // B. 실패 손실 허용 입찰액: 순이익 * lossRatio / 0.3
+  const lossCapWon = (profit * lossRatio) / 0.3;
+
+  // C. 최소 기대이익 충족 입찰액: B <= (p * S - M) / (0.3 + 0.7 * p)
+  let minEvCapWon = 0;
+  const numEv = (prob * evSave) - minReqEvWon;
+  const denEv = 0.3 + 0.7 * prob;
+  if (prob > 0 && numEv > 0) {
+    minEvCapWon = numEv / denEv;
+  } else {
+    minEvCapWon = 0; // 조건을 충족하는 입찰금액 없음
+  }
+
+  // D. 최종 위험 허용 입찰 상한 (Min of legal, bev, loss, minEv)
+  // M 조건을 만족하는 입찰가가 없으면 minEvCapWon = 0 → 상한 0 (투자 부적합)
+  const finalCapWon = Math.max(0, Math.min(maxLegalCap, bevCapWon, lossCapWon, minEvCapWon));
+
+  const validationEl = document.getElementById('validation');
+  if (validationEl) {
+    if (invalid) {
+      validationEl.textContent = '입력값 오류: 비어 있거나 음수인 값, 0~100% 범위를 벗어난 확률, -100% 이하 증감률이 있습니다. 아래 결과는 신뢰할 수 없습니다.';
+      validationEl.className = 'notice danger';
+      validationEl.style.display = '';
+    } else {
+      validationEl.textContent = '';
+      validationEl.style.display = 'none';
+    }
+  }
+
+  // UI 메트릭 업데이트
+  if (document.getElementById('kQuick')) document.getElementById('kQuick').textContent = money(quick);
+  if (document.getElementById('kMax')) document.getElementById('kMax').textContent = money(maxLegalCap);
+  if (document.getElementById('kSaveTotal')) document.getElementById('kSaveTotal').textContent = money(cumulativeSave);
+  if (document.getElementById('kProfit')) document.getElementById('kProfit').textContent = money(profit);
+
+  // 상한 결과 업데이트
+  if (document.getElementById('bevCapText')) {
+    document.getElementById('bevCapText').textContent = prob > 0 ? money(bevCapWon) : '낙찰 확률 0% (입찰 참여 불가)';
+  }
+  if (document.getElementById('lossCapText')) {
+    document.getElementById('lossCapText').textContent = money(lossCapWon);
+  }
+  if (document.getElementById('minEvCapText')) {
+    document.getElementById('minEvCapText').textContent = minEvCapWon > 0 ? money(minEvCapWon) : '조건을 충족하는 입찰금액 없음';
+  }
+  if (document.getElementById('finalMaxCapText')) {
+    document.getElementById('finalMaxCapText').textContent = money(finalCapWon);
+  }
+  if (document.getElementById('headerCapDisplay')) {
+    document.getElementById('headerCapDisplay').textContent = money(finalCapWon);
+  }
+
+  const capNotice = document.getElementById('capNotice');
+  if (capNotice) {
+    if (finalCapWon < minBidAllowed) {
+      capNotice.textContent = `입찰 참여 비추천: 계산된 위험 허용 입찰 상한(${money(finalCapWon)})이 최소 입찰금액(50억 원)에 미달합니다.`;
+      capNotice.className = 'notice danger mt-3';
+    } else {
+      capNotice.textContent = `설정 조건 적용 결과: 최종 위험 허용 입찰 상한은 ${money(finalCapWon)}입니다. (규정/손익분기/손실한도/최소이익 조건 중 최솟값)`;
+      capNotice.className = 'notice good mt-3';
+    }
+  }
+
+  // 검토 입찰금액 (bid) 기반 결과 계산
+  const recoveryIdx = rows.findIndex(r => r.cumulative >= bid);
+  const lossCostWon = bid * 0.3;
+  const lossRatioOfProfit = profit > 0 ? (lossCostWon / profit) * 100 : 0;
+  const netReturnWon = cumulativeSave - bid;
+  const evWon = prob * (evSave - bid) - (1 - prob) * lossCostWon;
+
+  // 현재 입찰금액 기준 손익분기 최소 낙찰 확률 계산:
+  // EV = p*(S - B) - (1-p)*(0.3*B) = p*(S - 0.7*B) - 0.3*B >= 0
+  // -> p >= (0.3 * B) / (S - 0.7 * B)   (S - 0.7B <= 0 이면 어떤 확률로도 EV < 0)
+  let bevProbText = '—';
+  const denomProb = evSave - 0.7 * bid;
+  if (bid <= 0) {
+    bevProbText = '0.0%';
+  } else if (denomProb <= 0) {
+    bevProbText = '달성 불가 (100%여도 EV < 0)';
+  } else {
+    const reqProb = (lossCostWon / denomProb) * 100;
+    if (reqProb <= 0) bevProbText = '0.0%';
+    else if (reqProb > 100) bevProbText = '100% 초과 (달성 불가)';
+    else bevProbText = `${reqProb.toFixed(1)}% 이상`;
+  }
+
+  if (document.getElementById('mSaveTotal')) document.getElementById('mSaveTotal').textContent = money(cumulativeSave);
+  if (document.getElementById('mNetReturn')) document.getElementById('mNetReturn').textContent = sign(netReturnWon);
+  if (document.getElementById('mPaybackPeriod')) document.getElementById('mPaybackPeriod').textContent = recoveryIdx >= 0 ? `${recoveryIdx + 1}분기` : '4분기 초과';
+  if (document.getElementById('mLossCost')) document.getElementById('mLossCost').textContent = '−' + money(lossCostWon);
+  if (document.getElementById('mLossRatio')) document.getElementById('mLossRatio').textContent = `${lossRatioOfProfit.toFixed(1)}%`;
+  if (document.getElementById('mEvValue')) document.getElementById('mEvValue').textContent = sign(evWon);
+  if (document.getElementById('mBevProb')) document.getElementById('mBevProb').textContent = bevProbText;
+
+  // 검토 입찰금액의 조건 충족 여부 체크
+  const isLegalBid = bid >= minBidAllowed && bid <= maxLegalCap;
+  const isEvMet = evWon >= minReqEvWon;
+  const isLossMet = lossCostWon <= profit * lossRatio;
+
+  updateCheckStatus('checkRuleCap', isLegalBid, isLegalBid ? '규정 준수 (50억~60% 한도)' : '규정 위반');
+  updateCheckStatus('checkRuleEv', isEvMet, isEvMet ? `충족 (EV: ${money(evWon)})` : `미달 (필요: ${money(minReqEvWon)})`);
+  updateCheckStatus('checkRuleLoss', isLossMet, isLossMet ? `충족 (비율: ${lossRatioOfProfit.toFixed(1)}%)` : `초과 (비율: ${lossRatioOfProfit.toFixed(1)}%)`);
+
+  // 5. 자동 투자 의사결정 상태 및 문장 생성
+  let statusState = 'INVESTABLE'; // INVESTABLE, CAUTION, UNFIT
+  if (!isLegalBid || finalCapWon < minBidAllowed) {
+    statusState = 'UNFIT';
+  } else if (isLegalBid && isEvMet && isLossMet && bid <= finalCapWon && evWon > 0) {
+    statusState = 'INVESTABLE';
+  } else {
+    statusState = 'CAUTION';
+  }
+
+  generateDecisionBriefing(statusState, bid, finalCapWon, prob, lossRatio, minReqEvWon, evWon, profit, maxLegalCap);
+
+  // 분기 표 업데이트
+  const qRows = document.getElementById('quarterRows');
+  if (qRows) {
+    qRows.innerHTML = rows.map((r, i) => `
+      <tr>
+        <td>${i + 1}분기</td>
+        <td>${money(r.c)}</td>
+        <td>${money(r.s)}</td>
+        <td>${money(r.cumulative)}</td>
+        <td class="${r.cumulative - bid >= 0 ? 'text-green font-bold' : 'text-red'}">${money(r.cumulative - bid)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 위험 유동성 안내
+  const liqNotice = document.getElementById('liquidity');
+  if (liqNotice) {
+    liqNotice.textContent = cash < bid 
+      ? `유동성 주의: 보유 현금(${money(cash)})이 입찰금액(${money(bid)})보다 부족합니다. 부족분 ${money(bid - cash)}에 대한 단기자금 조달 및 이자 비용 검토가 필수적입니다.`
+      : '보유 현금 잔액으로 입찰금액 충당이 가능합니다.';
+  }
+
+  // 신규 기능 ④ 그래프 그리기 (입찰금액별 위험/수익 커브 + 기준선)
+  renderRiskReturnCurveChart(minBidAllowed, maxLegalCap, evSave, prob, finalCapWon, bevCapWon, bid, profit);
+
+  // 분기별 누적 절감액 vs 입찰가 BEP 차트 그리기
+  renderQuarterlyBepChart(rows, bid);
+
+  // 경쟁사 시나리오 및 감도 분석 표 업데이트
+  updateCompetitorAndSensitivity(bid, cumulativeSave, maxLegalCap, prob, profit, pvSave, rows.map(r => r.s));
+}
+
+function updateCheckStatus(elementId, isPass, text) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const icon = el.querySelector('.status-icon');
+  if (isPass) {
+    el.className = 'p-3 rounded-lg border bg-emerald-50 border-emerald-200 flex items-center justify-between text-xs text-emerald-900';
+    if (icon) icon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> ${text}`;
+  } else {
+    el.className = 'p-3 rounded-lg border bg-rose-50 border-rose-200 flex items-center justify-between text-xs text-rose-900';
+    if (icon) icon.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1"></i> ${text}`;
+  }
+}
+
+function generateDecisionBriefing(status, bid, cap, prob, lossRatio, minEvWon, evWon, profit, maxLegal) {
+  const badge = document.getElementById('decisionStatusBadge');
+  const textEl = document.getElementById('decisionBriefingText');
+  const money = n => formatWonToBillionStr(n, 2);
+
+  const probPercent = Math.round(prob * 100);
+  const lossPercent = Math.round(lossRatio * 100);
+  const minEvBill = (minEvWon / 100000000).toFixed(2);
+
+  let statusHtml = '';
+  let msg = '';
+
+  if (status === 'INVESTABLE') {
+    badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-emerald-500 text-white';
+    badge.textContent = '투자 가능 (Investable)';
+    msg = `현재 C사의 재무정보와 설정된 낙찰 확률 ${probPercent}%, 실패 손실 허용 비율 ${lossPercent}%, 최소 기대이익 ${minEvBill}억 원을 적용하면 <strong>위험 허용 입찰 상한은 약 ${money(cap)}</strong>입니다. 현재 검토 입찰가(${money(bid)})는 해당 위험 허용 상한 이내에 위치하며 규정 및 수익성 조건을 완벽히 충족하므로 우수한 투자안으로 평가됩니다.`;
+  } else if (status === 'CAUTION') {
+    badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-amber-500 text-white';
+    badge.textContent = '주의 필요 (Caution)';
+    msg = `현재 검토 입찰가(${money(bid)})는 규정상 입찰 범위(50억 원 ~ ${money(maxLegal)})에는 포함되나, 설정된 낙찰 확률 ${probPercent}%, 허용 손실 비율 ${lossPercent}% 기준 <strong>위험 허용 입찰 상한(약 ${money(cap)})을 초과</strong>하거나 최소 요구 기대이익 기준을 만족하지 못합니다. 이 금액으로 입찰 시 실패 발생에 따른 손실이 허용 범위를 넘어서므로 입찰가 하향 조정을 권장합니다.`;
+  } else {
+    badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide bg-rose-600 text-white';
+    badge.textContent = '투자 부적합 (Unfit)';
+    msg = `현재 C사의 재무 조건 및 설정된 리스크 조건(${probPercent}% 확률, 손실 허용 ${lossPercent}%) 하에서는 <strong>최소 입찰금액(50억 원)조차 위험 허용 상한(${money(cap)})을 초과</strong>하거나 규정상 허용 한도를 벗어납니다. 현 조건에서의 특허권 M&A 입찰 참여는 재무적 리스크가 과도하므로 입찰 참여 부적합 판정을 내립니다.`;
+  }
+
+  textEl.innerHTML = msg;
+}
+
+/* 신규 기능 ④: 입찰금액별 위험·수익 그래프 (Chart.js) — X축 = 입찰금액, 기준선은 세로선 */
+function renderRiskReturnCurveChart(minBid, maxLegal, totalSave, prob, finalCap, bevCap, currentBid, profit) {
+  const ctx = document.getElementById('riskReturnChart')?.getContext('2d');
+  if (!ctx) return;
+  if (riskReturnChartInstance) riskReturnChartInstance.destroy();
+
+  const toBill = v => v / 100000000;
+  const xMin = toBill(minBid);
+  const xMax = Math.max(toBill(maxLegal), xMin + 1);
+  const stepCount = 40;
+  const evData = [], lossData = [];
+  for (let i = 0; i <= stepCount; i++) {
+    const bBill = xMin + (xMax - xMin) * i / stepCount;
+    const b = bBill * 100000000;
+    const ev = prob * (totalSave - b) - (1 - prob) * (0.3 * b);
+    evData.push({ x: bBill, y: Number(toBill(ev).toFixed(2)) });
+    lossData.push({ x: bBill, y: Number((-toBill(0.3 * b)).toFixed(2)) });
+  }
+
+  const markers = [
+    { v: toBill(currentBid), color: '#d97706', label: '현재 입찰가', dash: [] },
+    { v: toBill(bevCap), color: '#2563eb', label: '손익분기', dash: [2, 3] },
+    { v: toBill(finalCap), color: '#16a34a', label: '위험 허용 상한', dash: [6, 3] }
+  ];
+  const zone = finalCap >= minBid ? [xMin, Math.min(toBill(finalCap), xMax)] : null;
+
+  const refPlugin = {
+    id: 'bidRefLines',
+    beforeDatasetsDraw(chart) {
+      const { ctx: c, chartArea: a, scales: { x } } = chart;
+      if (!zone) return;
+      const x1 = x.getPixelForValue(zone[0]), x2 = x.getPixelForValue(zone[1]);
+      c.save();
+      c.fillStyle = 'rgba(22, 163, 74, 0.10)';
+      c.fillRect(x1, a.top, x2 - x1, a.bottom - a.top);
+      c.restore();
+    },
+    afterDatasetsDraw(chart) {
+      const { ctx: c, chartArea: a, scales: { x } } = chart;
+      markers.forEach((m, i) => {
+        if (!Number.isFinite(m.v) || m.v < xMin || m.v > xMax) return;
+        const px = x.getPixelForValue(m.v);
+        c.save();
+        c.strokeStyle = m.color; c.lineWidth = 1.5; c.setLineDash(m.dash);
+        c.beginPath(); c.moveTo(px, a.top); c.lineTo(px, a.bottom); c.stroke();
+        c.setLineDash([]); c.fillStyle = m.color; c.font = '600 10px "Noto Sans KR", sans-serif';
+        c.textAlign = px > a.right - 90 ? 'right' : 'left';
+        c.fillText(`${m.label} ${m.v.toFixed(1)}억`, px + (c.textAlign === 'right' ? -4 : 4), a.top + 12 + i * 13);
+        c.restore();
+      });
+    }
+  };
+
+  riskReturnChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: '기대가치 (EV, 억 원)', data: evData, borderColor: '#0f172a', backgroundColor: 'rgba(15, 23, 42, 0.05)', borderWidth: 2.5, fill: false, tension: 0, pointRadius: 0 },
+        { label: '실패 손실액 (-30%, 억 원)', data: lossData, borderColor: '#dc2626', borderDash: [4, 4], borderWidth: 2, fill: false, pointRadius: 0 }
+      ]
+    },
+    plugins: [refPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, color: '#475569' } },
+        tooltip: {
+          callbacks: {
+            title: (items) => `입찰금액: ${items[0].parsed.x.toFixed(1)}억 원`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y.toFixed(2)}억 원`
+          }
+        }
+      },
+      scales: {
+        x: { type: 'linear', min: xMin, max: xMax, title: { display: true, text: '입찰금액 (억 원)', color: '#64748b', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+        y: { title: { display: true, text: '금액 (억 원)', color: '#64748b', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } }
+      }
+    }
+  });
+}
+
+function renderQuarterlyBepChart(rows, bid) {
+  const ctx = document.getElementById('quarterlyBepChart')?.getContext('2d');
+  if (!ctx) return;
+
+  if (quarterlyBepChartInstance) quarterlyBepChartInstance.destroy();
+
+  const labels = rows.map((_, i) => `${i + 1}분기`);
+  const cumBill = rows.map(r => Number((r.cumulative / 100000000).toFixed(2)));
+  const qSaveBill = rows.map(r => Number((r.s / 100000000).toFixed(2)));
+  const bidBill = Number((bid / 100000000).toFixed(2));
+
+  quarterlyBepChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          type: 'line',
+          label: '누적 원가 절감액 (억 원)',
+          data: cumBill,
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22, 163, 74, 0.12)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.25,
+          pointRadius: 4
+        },
+        {
+          type: 'bar',
+          label: '분기별 원가 절감액 (억 원)',
+          data: qSaveBill,
+          backgroundColor: 'rgba(15, 23, 42, 0.15)',
+          borderColor: '#0f172a',
+          borderWidth: 1,
+          borderRadius: 4
+        },
+        {
+          type: 'line',
+          label: '현재 검토 입찰가 (BEP 기준선, 억 원)',
+          data: labels.map(() => bidBill),
+          borderColor: '#d97706',
+          borderDash: [6, 4],
+          borderWidth: 2,
+          fill: false,
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 11 }, color: '#475569' } },
+        tooltip: {
+          callbacks: {
+            label: (item) => `${item.dataset.label}: ${item.raw}억 원`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          title: { display: true, text: '금액 (억 원)', color: '#64748b', font: { size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        }
+      }
+    }
+  });
+}
+
+function updateCompetitorAndSensitivity(bid, cumulativeSave, maxLegalCap, prob, profit, pvSave, quarterSaves) {
+  const money = n => formatWonToBillionStr(n, 2);
+  const getNum = id => Number(document.getElementById(id)?.value || 0);
+
+  const comps = [
+    { name: 'A사', bid: getNum('aBid'), rank: 1 },
+    { name: 'B사', bid: getNum('bBid'), rank: 4 },
+    { name: 'D사', bid: getNum('dBid'), rank: 3 }
+  ];
+  const topCompBid = Math.max(...comps.map(c => c.bid));
+  const ties = comps.filter(c => c.bid === bid);
+  const rankVal = document.getElementById('rank')?.value || 'current';
+  
+  let win = bid > topCompBid ? 'C사 단독 낙찰 성공' : bid < topCompBid ? 'C사 낙찰 실패' : rankVal === 'unknown' ? '동률 (순위 미확인)' : ties.some(c => c.rank < 2) ? '동률 A사 우선 (C사 실패)' : '동률 C사 우선 (C사 성공)';
+  
+  const compNotice = document.getElementById('competition');
+  if (compNotice) {
+    compNotice.textContent = `경쟁사 최고 예상 입찰액: ${money(topCompBid)} → 시나리오 시뮬레이션 결과: ${win}`;
+    compNotice.className = 'notice ' + (win.includes('성공') ? 'good' : 'danger');
+  }
+
+  let minToBeat = topCompBid + 1000000;
+  let recommended = `4분기 누적 원가 절감액: ${money(cumulativeSave)} | 현재 검토 입찰가: ${money(bid)}<br>`;
+  recommended += minToBeat <= maxLegalCap 
+    ? `경쟁사 예상 최고가 상회를 위한 최소 추천 입찰액: 약 <strong>${money(minToBeat)}</strong>` 
+    : `경쟁사 최고가 상회 필요 금액(${money(minToBeat)})이 C사 규정 한도(${money(maxLegalCap)})를 초과합니다.`;
+  
+  const recElem = document.getElementById('recommendation');
+  if (recElem) recElem.innerHTML = recommended;
+
+  // 감도 분석 시뮬레이션 표 갱신
+  const candidateRates = [5000000000, 10000000000, 15000000000, 20000000000, 25000000000, 30000000000, Math.floor(maxLegalCap / 1000000) * 1000000];
+  const candidates = candidateRates.filter((v, i, a) => v <= maxLegalCap && a.indexOf(v) === i).sort((a, b) => a - b);
+  const optElem = document.getElementById('options');
+  if (optElem) {
+    optElem.innerHTML = candidates.map(v => {
+      const rec = (() => { let acc = 0; for (let q = 0; q < 4; q++) { acc += quarterSaves[q]; if (acc >= v) return q + 1; } return -1; })();
+      const e = prob * (pvSave - v) - (1 - prob) * v * 0.3;
+      return `
+        <tr>
+          <td>${money(v)}</td>
+          <td>${rec < 0 || rec > 4 ? '4분기 초과' : rec + '분기'}</td>
+          <td class="text-red">${money(v * 0.3)}</td>
+          <td class="${cumulativeSave - v >= 0 ? 'text-green font-bold' : 'text-red'}">${money(cumulativeSave - v)}</td>
+          <td class="${e >= 0 ? 'text-green font-bold' : 'text-red'}">${money(e)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
+
+function initLiveDashboardEventListeners() {
+  document.getElementById('toggleSourceBtn')?.addEventListener('click', () => {
+    document.getElementById('sourceBar').classList.toggle('hidden');
+  });
+
+  document.getElementById('applyUrlBtn')?.addEventListener('click', () => {
+    const url = document.getElementById('csvUrlInput').value.trim();
+    if (url) {
+      liveState.csvUrl = url;
+      fetchData();
+    }
+  });
+
+  document.getElementById('refreshBtn')?.addEventListener('click', () => fetchData());
+
+  document.getElementById('autoRefreshSelect')?.addEventListener('change', (e) => {
+    liveState.autoRefreshInterval = parseInt(e.target.value, 10);
+    setupAutoRefresh();
+  });
+
+  document.getElementById('xAxisSelect')?.addEventListener('change', (e) => {
+    liveState.selectedXAxis = e.target.value;
+    renderInteractiveFocusChart();
+  });
+
+  document.getElementById('yAxisSelect')?.addEventListener('change', (e) => {
+    liveState.selectedYAxis = e.target.value;
+    renderInteractiveFocusChart();
+  });
+
+  document.querySelectorAll('.focus-chart-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.focus-chart-btn').forEach(b => {
+        b.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+        b.classList.add('text-slate-500');
+      });
+      const target = e.currentTarget;
+      target.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+      target.classList.remove('text-slate-500');
+      liveState.focusChartType = target.getAttribute('data-type');
+      renderInteractiveFocusChart();
+    });
+  });
+
+  document.getElementById('searchInput')?.addEventListener('input', (e) => {
+    liveState.searchQuery = e.target.value.trim().toLowerCase();
+    liveState.currentPage = 1;
+    applyFiltersAndRenderTable();
+  });
+
+  document.getElementById('categoryFilterSelect')?.addEventListener('change', (e) => {
+    liveState.filterCategory = e.target.value;
+    liveState.currentPage = 1;
+    applyFiltersAndRenderTable();
+  });
+
+  document.getElementById('pageSizeSelect')?.addEventListener('change', (e) => {
+    liveState.pageSize = parseInt(e.target.value, 10);
+    liveState.currentPage = 1;
+    renderTable();
+  });
+
+  document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+    if (liveState.currentPage > 1) {
+      liveState.currentPage--;
+      renderTable();
+    }
+  });
+
+  document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+    const maxPage = Math.ceil(liveState.filteredData.length / liveState.pageSize) || 1;
+    if (liveState.currentPage < maxPage) {
+      liveState.currentPage++;
+      renderTable();
+    }
+  });
+
+  document.getElementById('exportCsvBtn')?.addEventListener('click', exportToCSV);
+  document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
+  document.getElementById('closeModalFooterBtn')?.addEventListener('click', closeModal);
+  document.getElementById('closeAlertBtn')?.addEventListener('click', () => {
+    document.getElementById('alertBox').classList.add('hidden');
+  });
+}
+
+function setupAutoRefresh() {
+  if (liveState.timerId) clearInterval(liveState.timerId);
+  if (liveState.autoRefreshInterval > 0) {
+    liveState.timerId = setInterval(() => fetchData(true), liveState.autoRefreshInterval * 1000);
+  }
+}
+
+async function fetchData(isSilent = false) {
+  const refreshIcon = document.getElementById('refreshIcon');
+  if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+  try {
+    const cacheBustUrl = `${liveState.csvUrl}${liveState.csvUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+    const response = await fetch(cacheBustUrl);
+    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+    const csvText = await response.text();
+    setLiveBadge(true);
+    parseAndProcessData(csvText);
+    if (!isSilent) showAlert('success', '동기화 완료', '데이터 소스로부터 최신 상태로 성공적으로 동기화되었습니다.');
+  } catch (err) {
+    Papa.parse(liveState.csvUrl, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        if (results.data && results.data.length > 0) { processParsedData(results.data); setLiveBadge(true); }
+        else loadFallbackDemoData(err.message);
+      },
+      error: function(parseErr) { loadFallbackDemoData(err.message || parseErr.message); }
+    });
+  } finally {
+    if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+  }
+}
+
+function parseAndProcessData(csvText) {
+  Papa.parse(csvText, {
+    header: true,
+    skipEmptyLines: true,
+    dynamicTyping: true,
+    complete: function(results) {
+      if (results.data && results.data.length > 0) processParsedData(results.data);
+      else loadFallbackDemoData('데이터가 비어 있습니다.');
+    }
+  });
+}
+
+function processParsedData(data) {
+  const cleanData = data.map(row => {
+    const cleanedRow = {};
+    Object.keys(row).forEach(k => {
+      const cleanKey = k.trim();
+      let val = row[k];
+      if (typeof val === 'string') val = val.trim();
+      cleanedRow[cleanKey] = val;
+    });
+    return cleanedRow;
+  });
+
+  liveState.rawData = cleanData;
+  liveState.filteredData = [...cleanData];
+  liveState.headers = Object.keys(cleanData[0] || {});
+
+  liveState.numericColumns = [];
+  liveState.categoricalColumns = [];
+
+  liveState.headers.forEach(header => {
+    let numericCount = 0;
+    let sampleCount = 0;
+
+    cleanData.forEach(row => {
+      const val = row[header];
+      if (val !== null && val !== undefined && val !== '') {
+        sampleCount++;
+        if (typeof val === 'number') numericCount++;
+        else if (typeof val === 'string') {
+          const parsedNum = parseFloat(val.replace(/[\$,가-힇]/g, ''));
+          if (!isNaN(parsedNum)) numericCount++;
+        }
+      }
+    });
+
+    if (sampleCount > 0 && numericCount / sampleCount > 0.6) liveState.numericColumns.push(header);
+    else liveState.categoricalColumns.push(header);
+  });
+
+  liveState.lastUpdated = new Date();
+  updateLastUpdatedUI();
+
+  populateAxisSelectors();
+  populateCategoryFilterDropdown();
+
+  renderKPIs();
+  renderInteractiveFocusChart();
+  renderAllColumnsGrid();
+  applyFiltersAndRenderTable();
+}
+
+function populateAxisSelectors() {
+  const xSelect = document.getElementById('xAxisSelect');
+  const ySelect = document.getElementById('yAxisSelect');
+  if (!xSelect || !ySelect) return;
+
+  xSelect.innerHTML = '';
+  ySelect.innerHTML = '<option value="">(건수 집계)</option>';
+
+  liveState.headers.forEach(h => {
+    const optX = document.createElement('option');
+    optX.value = h;
+    optX.textContent = h;
+    optX.className = 'bg-white text-slate-900';
+    xSelect.appendChild(optX);
+
+    const optY = document.createElement('option');
+    optY.value = h;
+    optY.textContent = h;
+    optY.className = 'bg-white text-slate-900';
+    ySelect.appendChild(optY);
+  });
+
+  const preferredCatCol = liveState.categoricalColumns.find(c => c.trim() !== '구분') || liveState.categoricalColumns[0] || liveState.headers[0];
+  liveState.selectedXAxis = preferredCatCol;
+  liveState.selectedYAxis = liveState.numericColumns[0] || '';
+
+  xSelect.value = liveState.selectedXAxis;
+  ySelect.value = liveState.selectedYAxis;
+}
+
+function renderKPIs() {
+  const container = document.getElementById('kpiContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const totalRows = liveState.rawData.length;
+
+  container.appendChild(createKpiCard('총 데이터 레코드', totalRows.toLocaleString() + ' 건', 'fa-solid fa-database', 'border-slate-300 text-slate-900', '전체 연동 항목'));
+
+  const visualHeadersCount = liveState.headers.filter(h => h.trim() !== '구분').length;
+
+  container.appendChild(createKpiCard('분석 대상 컬럼 수', visualHeadersCount + ' 개 열', 'fa-solid fa-columns', 'border-slate-300 text-slate-900', `'구분' 컬럼 제외 시각화`));
+
+  if (liveState.numericColumns.length > 0) {
+    const firstNumCol = liveState.numericColumns[0];
+    let sum = 0;
+    liveState.rawData.forEach(r => {
+      const val = typeof r[firstNumCol] === 'number' ? r[firstNumCol] : parseFloat(String(r[firstNumCol]).replace(/[\$,가-힇]/g, ''));
+      if (!isNaN(val)) sum += val;
+    });
+
+    container.appendChild(createKpiCard(`${firstNumCol} 합계`, formatValue(sum), 'fa-solid fa-calculator', 'border-slate-300 text-slate-900', '주요 수치 총합계'));
+  }
+
+  const meaningfulCatCols = liveState.categoricalColumns.filter(c => c.trim() !== '구분');
+  if (meaningfulCatCols.length > 0) {
+    const targetCatCol = meaningfulCatCols[0];
+    const counts = {};
+    liveState.rawData.forEach(r => {
+      const key = String(r[targetCatCol] || '기타');
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const topKey = Object.keys(counts).sort((a,b) => counts[b] - counts[a])[0] || 'N/A';
+
+    container.appendChild(createKpiCard(`최다 항목 (${targetCatCol})`, topKey, 'fa-solid fa-trophy', 'border-slate-300 text-slate-900', `빈도수: ${counts[topKey] || 0}건`));
+  }
+
+  document.getElementById('dataCountBadge').textContent = `${totalRows.toLocaleString()} 개 레코드`;
+}
+
+function createKpiCard(title, value, iconClass, colorClasses, subtext) {
+  const card = document.createElement('div');
+  card.className = `glass-card p-5 rounded-2xl border ${colorClasses} flex flex-col justify-between transition-all duration-300 hover:shadow-md bg-white`;
+  card.innerHTML = `
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-slate-500">${title}</span>
+      <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
+        <i class="${iconClass} text-sm"></i>
+      </div>
+    </div>
+    <div>
+      <div class="text-2xl font-extrabold text-slate-900 tracking-tight font-mono mb-1 truncate">${value}</div>
+      <div class="text-[11px] text-slate-500 flex items-center gap-1">
+        <i class="fa-solid fa-angle-right text-xs opacity-60"></i> ${subtext}
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+const chartColors = ['#0f172a', '#1e293b', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1', '#475569', '#334155', '#1e293b'];
+
+function renderInteractiveFocusChart() {
+  const ctx = document.getElementById('interactiveCanvas')?.getContext('2d');
+  if (!ctx) return;
+
+  if (focusChartInstance) focusChartInstance.destroy();
+
+  const xCol = liveState.selectedXAxis || liveState.headers[0];
+  const yCol = liveState.selectedYAxis;
+
+  const aggregation = {};
+  liveState.rawData.forEach(row => {
+    const label = String(row[xCol] || '기타');
+    let val = 1;
+    if (yCol) {
+      const parsed = typeof row[yCol] === 'number' ? row[yCol] : parseFloat(String(row[yCol]).replace(/[\$,가-힇]/g, ''));
+      val = isNaN(parsed) ? 0 : parsed;
+    }
+    aggregation[label] = (aggregation[label] || 0) + val;
+  });
+
+  const isQuarterData = Object.keys(aggregation).some(k => /(?:(\d+)차년도)?\s*(\d+)분기/.test(k));
+  let sortedKeys = isQuarterData ? Object.keys(aggregation).sort(compareQuarterOrText) : Object.keys(aggregation).sort((a, b) => aggregation[b] - aggregation[a]).slice(0, 15);
+
+  const labels = sortedKeys;
+  const values = sortedKeys.map(k => aggregation[k]);
+
+  focusChartInstance = new Chart(ctx, {
+    type: liveState.focusChartType,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: yCol ? `${yCol} 합계` : '빈도 수',
+        data: values,
+        backgroundColor: liveState.focusChartType === 'line' ? 'rgba(15, 23, 42, 0.08)' : chartColors,
+        borderColor: '#0f172a',
+        borderWidth: 1.5,
+        fill: liveState.focusChartType === 'line',
+        tension: 0.35,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: liveState.focusChartType === 'doughnut' },
+        tooltip: { backgroundColor: '#ffffff', titleColor: '#0f172a', bodyColor: '#334155', borderColor: '#cbd5e1', borderWidth: 1 }
+      },
+      scales: liveState.focusChartType !== 'doughnut' ? {
+        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#64748b' } },
+        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#64748b' } }
+      } : {}
+    }
+  });
+}
+
+function renderAllColumnsGrid() {
+  const grid = document.getElementById('allColumnsGrid');
+  if (!grid) return;
+
+  Object.values(columnChartInstances).forEach(inst => inst && inst.destroy());
+  columnChartInstances = {};
+  grid.innerHTML = '';
+
+  const visualHeaders = liveState.headers.filter(h => h.trim() !== '구분');
+  document.getElementById('totalColBadge').textContent = `${visualHeaders.length} 개 시각화 ('구분' 제외됨)`;
+
+  visualHeaders.forEach((header, idx) => {
+    const isNumeric = liveState.numericColumns.includes(header);
+    if (!liveState.columnChartTypes[header]) liveState.columnChartTypes[header] = isNumeric ? 'line' : 'bar';
+    const currentType = liveState.columnChartTypes[header];
+
+    const card = document.createElement('div');
+    card.className = 'glass-card rounded-2xl p-5 border border-slate-200 flex flex-col justify-between space-y-4 bg-white';
+
+    const canvasId = `colCanvas_${idx}`;
+    let statsHtml = '';
+    let labels = [];
+    let values = [];
+
+    if (isNumeric) {
+      let sum = 0, count = 0, min = Infinity, max = -Infinity;
+      const valArray = [];
+
+      liveState.rawData.forEach(r => {
+        const val = typeof r[header] === 'number' ? r[header] : parseFloat(String(r[header]).replace(/[\$,가-힇]/g, ''));
+        if (!isNaN(val)) {
+          sum += val;
+          count++;
+          if (val < min) min = val;
+          if (val > max) max = val;
+          valArray.push(val);
+        }
+      });
+
+      const avg = count > 0 ? (sum / count) : 0;
+      labels = valArray.slice(0, 15).map((_, i) => `#${i+1}`);
+      values = valArray.slice(0, 15);
+
+      statsHtml = `
+        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div><span class="text-slate-500 block text-[10px]">평균값</span><span class="text-slate-900 font-bold font-mono">${formatValue(avg)}</span></div>
+          <div><span class="text-slate-500 block text-[10px]">총합계</span><span class="text-slate-900 font-bold font-mono">${formatValue(sum)}</span></div>
+          <div><span class="text-slate-500 block text-[10px]">최소값</span><span class="text-slate-700 font-mono">${formatValue(min === Infinity ? 0 : min)}</span></div>
+          <div><span class="text-slate-500 block text-[10px]">최대값</span><span class="text-slate-900 font-bold font-mono">${formatValue(max === -Infinity ? 0 : max)}</span></div>
+        </div>
+      `;
+    } else {
+      const counts = {};
+      liveState.rawData.forEach(r => {
+        const key = String(r[header] || '기타');
+        counts[key] = (counts[key] || 0) + 1;
+      });
+
+      const isQuarterCol = Object.keys(counts).some(k => /(?:(\d+)차년도)?\s*(\d+)분기/.test(k));
+      const sorted = Object.entries(counts).sort((a, b) => {
+        if (isQuarterCol) return compareQuarterOrText(a[0], b[0]);
+        return b[1] - a[1];
+      }).slice(0, 10);
+
+      labels = sorted.map(item => item[0]);
+      values = sorted.map(item => item[1]);
+
+      statsHtml = `
+        <div class="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between">
+          <span>고유 항목 수:</span>
+          <span class="text-slate-900 font-bold font-mono">${Object.keys(counts).length} 개</span>
+        </div>
+      `;
+    }
+
+    card.innerHTML = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full ${isNumeric ? 'bg-slate-900' : 'bg-slate-500'}"></span>
+          <h4 class="font-bold text-slate-900 text-sm truncate max-w-[130px]" title="${header}">${header}</h4>
+        </div>
+
+        <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5 text-[11px]">
+          <button class="col-chart-type-btn p-1 px-1.5 rounded transition-colors ${currentType === 'bar' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-900'}" data-col="${header}" data-type="bar" title="막대">
+            <i class="fa-solid fa-chart-simple"></i>
+          </button>
+          <button class="col-chart-type-btn p-1 px-1.5 rounded transition-colors ${currentType === 'line' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-900'}" data-col="${header}" data-type="line" title="선">
+            <i class="fa-solid fa-chart-line"></i>
+          </button>
+          <button class="col-chart-type-btn p-1 px-1.5 rounded transition-colors ${currentType === 'doughnut' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-900'}" data-col="${header}" data-type="doughnut" title="도넛">
+            <i class="fa-solid fa-circle-notch"></i>
+          </button>
+        </div>
+      </div>
+
+      ${statsHtml}
+
+      <div class="h-32 w-full relative pt-1">
+        <canvas id="${canvasId}"></canvas>
+      </div>
+    `;
+
+    grid.appendChild(card);
+
+    setTimeout(() => {
+      const miniCtx = document.getElementById(canvasId)?.getContext('2d');
+      if (miniCtx) {
+        const isDoughnut = currentType === 'doughnut';
+        const isLine = currentType === 'line';
+        const bgColors = isDoughnut ? chartColors : (isLine ? chartColors[idx % chartColors.length] + '20' : chartColors[idx % chartColors.length]);
+
+        columnChartInstances[canvasId] = new Chart(miniCtx, {
+          type: currentType,
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: bgColors,
+              borderColor: chartColors[idx % chartColors.length],
+              borderWidth: isDoughnut ? 1 : 1.5,
+              fill: isLine,
+              tension: 0.35,
+              borderRadius: currentType === 'bar' ? 3 : 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: isDoughnut, position: 'right', labels: { boxWidth: 8, font: { size: 9 }, color: '#475569' } },
+              tooltip: { backgroundColor: '#ffffff', titleColor: '#0f172a', bodyColor: '#334155', borderColor: '#cbd5e1', borderWidth: 1 }
+            },
+            scales: isDoughnut ? {} : {
+              x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+              y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { color: '#64748b', font: { size: 9 } } }
+            }
+          }
+        });
+      }
+    }, 50);
+  });
+
+  document.querySelectorAll('.col-chart-type-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const col = e.currentTarget.getAttribute('data-col');
+      const type = e.currentTarget.getAttribute('data-type');
+      if (col && type) {
+        liveState.columnChartTypes[col] = type;
+        renderAllColumnsGrid();
+      }
+    });
+  });
+}
+
+function populateCategoryFilterDropdown() {
+  const select = document.getElementById('categoryFilterSelect');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">전체 필터</option>';
+  const meaningfulCatCols = liveState.categoricalColumns.filter(c => c.trim() !== '구분');
+  if (meaningfulCatCols.length === 0) return;
+
+  const catCol = meaningfulCatCols[0];
+  const uniqueVals = new Set();
+  liveState.rawData.forEach(r => { if (r[catCol]) uniqueVals.add(String(r[catCol])); });
+
+  uniqueVals.forEach(val => {
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = `${catCol}: ${val}`;
+    opt.className = 'bg-white text-slate-900';
+    select.appendChild(opt);
+  });
+}
+
+function applyFiltersAndRenderTable() {
+  let data = [...liveState.rawData];
+
+  if (liveState.searchQuery) {
+    data = data.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(liveState.searchQuery)));
+  }
+
+  const meaningfulCatCols = liveState.categoricalColumns.filter(c => c.trim() !== '구분');
+  if (liveState.filterCategory && meaningfulCatCols.length > 0) {
+    const catCol = meaningfulCatCols[0];
+    data = data.filter(row => String(row[catCol]) === liveState.filterCategory);
+  }
+
+  if (liveState.sortColumn) {
+    data.sort((a, b) => {
+      let valA = a[liveState.sortColumn];
+      let valB = b[liveState.sortColumn];
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
+      const res = compareQuarterOrText(valA, valB);
+      return liveState.sortAscending ? res : -res;
+    });
+  }
+
+  liveState.filteredData = data;
+  document.getElementById('filteredCountBadge').textContent = `${data.length.toLocaleString()} 개 항목`;
+  renderTable();
+}
+
+function compareQuarterOrText(a, b) {
+  const regex = /(?:(\d+)차년도)?\s*(\d+)분기/;
+  const matchA = String(a).match(regex);
+  const matchB = String(b).match(regex);
+
+  if (matchA && matchB) {
+    const yearA = matchA[1] ? parseInt(matchA[1], 10) : 0;
+    const qA = parseInt(matchA[2], 10);
+    const yearB = matchB[1] ? parseInt(matchB[1], 10) : 0;
+    const qB = parseInt(matchB[2], 10);
+
+    if (yearA !== yearB) return yearA - yearB;
+    return qA - qB;
+  }
+  return String(a).localeCompare(String(b), 'ko', { numeric: true });
+}
+
+function renderTable() {
+  const headerRow = document.getElementById('tableHeader');
+  const tbody = document.getElementById('tableBody');
+  if (!headerRow || !tbody) return;
+
+  headerRow.innerHTML = '';
+  const trHead = document.createElement('tr');
+
+  liveState.headers.forEach(h => {
+    const th = document.createElement('th');
+    th.className = 'p-3.5 whitespace-nowrap cursor-pointer hover:text-slate-900 select-none transition-colors';
+    th.innerHTML = `
+      <div class="flex items-center gap-1.5">
+        <span>${h}</span>
+        ${liveState.sortColumn === h ? `<i class="fa-solid fa-arrow-${liveState.sortAscending ? 'up' : 'down'} text-slate-900 text-[10px]"></i>` : '<i class="fa-solid fa-sort text-slate-400 text-[10px]"></i>'}
+      </div>
+    `;
+    th.addEventListener('click', () => {
+      if (liveState.sortColumn === h) liveState.sortAscending = !liveState.sortAscending;
+      else { liveState.sortColumn = h; liveState.sortAscending = true; }
+      applyFiltersAndRenderTable();
+    });
+    trHead.appendChild(th);
+  });
+
+  const thAction = document.createElement('th');
+  thAction.className = 'p-3.5 whitespace-nowrap text-right';
+  thAction.textContent = '상세';
+  trHead.appendChild(thAction);
+  headerRow.appendChild(trHead);
+
+  tbody.innerHTML = '';
+  const startIdx = (liveState.currentPage - 1) * liveState.pageSize;
+  const pageData = liveState.filteredData.slice(startIdx, startIdx + liveState.pageSize);
+
+  if (pageData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${liveState.headers.length + 1}" class="p-8 text-center text-slate-400">데이터가 없습니다.</td></tr>`;
+  } else {
+    pageData.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 transition-colors border-b border-slate-200';
+
+      liveState.headers.forEach(h => {
+        const td = document.createElement('td');
+        td.className = 'p-3.5 whitespace-nowrap text-slate-700';
+        const val = row[h];
+
+        if (typeof val === 'string' && ['완료', '성공', 'Active', '승인'].includes(val)) {
+          td.innerHTML = `<span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">${val}</span>`;
+        } else if (typeof val === 'string' && ['진행중', '대기', 'Pending'].includes(val)) {
+          td.innerHTML = `<span class="px-2 py-0.5 text-[10px] rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">${val}</span>`;
+        } else {
+          td.textContent = val !== null && val !== undefined ? val : '-';
+        }
+        tr.appendChild(td);
+      });
+
+      const tdAction = document.createElement('td');
+      tdAction.className = 'p-3.5 whitespace-nowrap text-right';
+      tdAction.innerHTML = `<button class="p-1 px-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs transition-colors"><i class="fa-solid fa-eye"></i></button>`;
+      tdAction.querySelector('button').addEventListener('click', () => openModal(row));
+      tr.appendChild(tdAction);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  const maxPage = Math.ceil(liveState.filteredData.length / liveState.pageSize) || 1;
+  document.getElementById('pageInfoText').textContent = `${liveState.currentPage} / ${maxPage} 페이지`;
+  document.getElementById('prevPageBtn').disabled = liveState.currentPage <= 1;
+  document.getElementById('nextPageBtn').disabled = liveState.currentPage >= maxPage;
+}
+
+function openModal(row) {
+  const modal = document.getElementById('detailModal');
+  const card = document.getElementById('modalCard');
+  const body = document.getElementById('modalBody');
+  if (!modal || !body) return;
+
+  body.innerHTML = '';
+  Object.entries(row).forEach(([k, v]) => {
+    const item = document.createElement('div');
+    item.className = 'bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex justify-between gap-2';
+    item.innerHTML = `<span class="text-slate-500 font-semibold">${k}:</span><span class="text-slate-900 font-mono break-all">${v !== null && v !== undefined ? v : '-'}</span>`;
+    body.appendChild(item);
+  });
+
+  modal.classList.remove('hidden');
+  setTimeout(() => { card.classList.remove('scale-95', 'opacity-0'); card.classList.add('scale-100', 'opacity-100'); }, 10);
+}
+
+function closeModal() {
+  const modal = document.getElementById('detailModal');
+  const card = document.getElementById('modalCard');
+  if (!modal || !card) return;
+  card.classList.remove('scale-100', 'opacity-100');
+  card.classList.add('scale-95', 'opacity-0');
+  setTimeout(() => modal.classList.add('hidden'), 200);
+}
+
+function exportToCSV() {
+  if (!liveState.filteredData || liveState.filteredData.length === 0) return;
+  const csv = Papa.unparse(liveState.filteredData);
+  downloadFile(csv, `dashboard_export_${Date.now()}.csv`, 'text/csv;charset=utf-8;');
+}
+
+function updateLastUpdatedUI() {
+  if (!liveState.lastUpdated) return;
+  document.getElementById('lastUpdatedTime').textContent = liveState.lastUpdated.toLocaleTimeString('ko-KR');
+}
+
+function showAlert(type, title, message) {
+  const box = document.getElementById('alertBox');
+  if (!box) return;
+  box.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-900', 'bg-rose-50', 'border-rose-200', 'text-rose-900');
+
+  if (type === 'success') {
+    box.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+    document.getElementById('alertIcon').className = 'fa-solid fa-circle-check text-emerald-600 mt-0.5';
+  } else {
+    box.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
+    document.getElementById('alertIcon').className = 'fa-solid fa-triangle-exclamation text-rose-600 mt-0.5';
+  }
+
+  document.getElementById('alertTitle').textContent = title;
+  document.getElementById('alertMessage').textContent = message;
+  setTimeout(() => box.classList.add('hidden'), 5000);
+}
+
+function formatValue(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  if (num >= 100000000) return (num / 100000000).toFixed(1) + ' 억';
+  if (num >= 10000) return (num / 10000).toFixed(1) + ' 만';
+  if (Number.isInteger(num)) return num.toLocaleString();
+  return num.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+}
+
+function setLiveBadge(isLive) {
+  const badge = document.getElementById('liveStatusBadge');
+  if (!badge) return;
+  badge.innerHTML = isLive
+    ? '<span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span> 실시간 연동중'
+    : '<span class="w-2 h-2 rounded-full bg-slate-400"></span> 샘플 데이터 표시 중 (연동 실패)';
+}
+
+function loadFallbackDemoData(reason) {
+  setLiveBadge(false);
+  showAlert('error', '샘플 데이터 로딩', `연동 중 예외 발생으로 데모 샘플 데이터셋을 불러옵니다. (${reason})`);
+  const demoData = [
+    { "구분": "3차년도 4분기", "부서": "영업팀", "담당자": "김민수", "지역": "서울", "매출액": 12500000, "상태": "완료" },
+    { "구분": "4차년도 1분기", "부서": "마케팅", "담당자": "이서연", "지역": "경기", "매출액": 8400000, "상태": "진행중" },
+    { "구분": "4차년도 2분기", "부서": "개발팀", "담당자": "박지훈", "지역": "인천", "매출액": 15000000, "상태": "완료" },
+    { "구분": "4차년도 3분기", "부서": "영업팀", "담당자": "최유진", "지역": "부산", "매출액": 9800000, "상태": "대기" },
+    { "구분": "3차년도 4분기", "부서": "기획팀", "담당자": "정태양", "지역": "서울", "매출액": 11200000, "상태": "완료" },
+    { "구분": "4차년도 1분기", "부서": "마케팅", "담당자": "한소희", "지역": "대구", "매출액": 6700000, "상태": "진행중" }
+  ];
+  processParsedData(demoData);
+}
+
+function renderReport() {
+  const container = document.getElementById('reportContent');
+  const pName = document.getElementById('projectName').value || '미정 프로젝트';
+  const bName = document.getElementById('brandName').value || '미정 브랜드';
+
+  document.getElementById('reportProjectTitle').textContent = `${pName} - 마케팅 종합 전략 보고서`;
+  document.getElementById('reportBrandTitle').textContent = `브랜드: ${bName}`;
+
+  container.innerHTML = `
+    <div class="report-section">
+      <h2>1. 전략 수립 배경 & 목표</h2>
+      <div class="report-grid">
+        <div class="report-box"><strong>시장 정의</strong><div>${document.getElementById('marketDefinition').value || '미작성'}</div></div>
+        <div class="report-box"><strong>전략 목표</strong><div>${document.getElementById('strategyObjective').value || '미작성'}</div></div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <h2>2. STP Strategy (세분화, 타깃팅, 포지셔닝)</h2>
+      <div class="space-y-3">
+        <div class="report-box"><strong>시장 세분화 (Segmentation)</strong><div>인구통계: ${document.getElementById('segDemo').value || '-'}<br>심리/행동: ${document.getElementById('segBehavior').value || '-'}</div></div>
+        <div class="report-box"><strong>표적시장 (Targeting)</strong><div>핵심 타깃: ${document.getElementById('primaryTarget').value || '-'}<br>보조 타깃: ${document.getElementById('secondaryTarget').value || '-'}</div></div>
+        <div class="report-box"><strong>포지셔닝 (Positioning Statement)</strong><div>${document.getElementById('positioningStatement').value || '-'}</div></div>
+      </div>
+    </div>
+
+    <div class="report-section">
+      <h2>3. 4P Marketing Mix (실행 전략)</h2>
+      <div class="report-grid">
+        <div class="report-box"><strong>Product (제품)</strong><div>${document.getElementById('productCore').value || '-'}</div></div>
+        <div class="report-box"><strong>Price (가격)</strong><div>${document.getElementById('priceLevel').value || '-'}</div></div>
+        <div class="report-box"><strong>Place (유통)</strong><div>${document.getElementById('placeChannel').value || '-'}</div></div>
+        <div class="report-box"><strong>Promotion (촉진)</strong><div>${document.getElementById('promoMix').value || '-'}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ==========================================================================
+   PERSISTENCE, JSON & FILE EXPORT / IMPORT FUNCTIONS
+   ========================================================================== */
+
+function collectFormData() {
+  const fields = {};
+  document.querySelectorAll('input[id], textarea[id], select[id]').forEach(el => {
+    if (el.type === 'file') return; // 파일 입력은 값 복원이 불가능하므로 제외
+    fields[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
+
+  return {
+    projectName: document.getElementById('projectName').value,
+    brandName: document.getElementById('brandName').value,
+    competitors: hubState.competitors,
+    csvUrl: liveState.csvUrl,
+    fields: fields
+  };
+}
+
+function saveToLocalStorage() {
+  const data = collectFormData();
+  localStorage.setItem('mkt_hub_data', JSON.stringify(data));
+  alert('브라우저에 전략 데이터가 저장되었습니다.');
+}
+
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem('mkt_hub_data');
+  if (!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    applyDataToApp(data);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function applyDataToApp(data) {
+  if (data.fields) {
+    Object.keys(data.fields).forEach(id => {
+      const elem = document.getElementById(id);
+      if (!elem || elem.type === 'file') return;
+      if (elem.type === 'checkbox') elem.checked = data.fields[id] === true || data.fields[id] === 'true';
+      else elem.value = data.fields[id];
+    });
+  }
+  if (data.competitors) hubState.competitors = data.competitors;
+  if (data.csvUrl) {
+    liveState.csvUrl = data.csvUrl;
+    const csvInput = document.getElementById('csvUrlInput');
+    if (csvInput) csvInput.value = data.csvUrl;
+  }
+
+  syncProjectHeader();
+  updateCounters();
+  updateProgress();
+  updatePreviews();
+  renderMap();
+
+  const probEl = document.getElementById('prob');
+  const lossEl = document.getElementById('lossLimitRatio');
+  const minEvEl = document.getElementById('minReqEv');
+  if (probEl) document.getElementById('probBadge').textContent = `${probEl.value}%`;
+  if (lossEl) document.getElementById('lossRatioBadge').textContent = `${lossEl.value}%`;
+  if (minEvEl) document.getElementById('minEvBadge').textContent = `${parseFloat(minEvEl.value || 0).toFixed(2)}억 원`;
+
+  const refreshSel = document.getElementById('autoRefreshSelect');
+  if (refreshSel) {
+    liveState.autoRefreshInterval = parseInt(refreshSel.value, 10) || 0;
+    setupAutoRefresh();
+  }
+
+  calculateMa();
+  if (typeof sdCalc === 'function') sdCalc();
+  }
+
+function downloadFile(content, fileName, contentType) {
+  const blob = new Blob(['\ufeff' + content], { type: contentType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 1. JSON Export
+function exportJSON() {
+  const data = collectFormData();
+  const jsonStr = JSON.stringify(data, null, 2);
+  const pName = data.projectName || 'marketing_strategy';
+  downloadFile(jsonStr, `${pName}_data.json`, 'application/json');
+}
+
+// 2. JSON Import
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyDataToApp(data);
+      alert('JSON 데이터를 성공적으로 불러왔습니다.');
+    } catch (err) {
+      alert('올바르지 않은 JSON 파일입니다.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// 3. HTML Export
+function exportHTML() {
+  const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const pName = document.getElementById('projectName').value || 'marketing_hub';
+  downloadFile(htmlContent, `${pName}.html`, 'text/html;charset=utf-8;');
+}
+
+// 4. Markdown (.md) Export
+function exportReportToMarkdown() {
+  const getVal = (id) => document.getElementById(id)?.value?.trim() || '미작성';
+  const pName = getVal('projectName');
+  const bName = getVal('brandName');
+
+  let md = `# ${pName} - 통합 마케팅 전략 보고서\n\n`;
+  md += `**브랜드/기업명:** ${bName}\n\n`;
+  md += `---\n\n`;
+
+  md += `## 1. 전략 수립 배경 & 목표\n\n`;
+  md += `- **시장 정의:**\n  ${getVal('marketDefinition')}\n`;
+  md += `- **전략 목표:**\n  ${getVal('strategyObjective')}\n\n`;
+
+  md += `## 2. STP Strategy (세분화, 타깃팅, 포지셔닝)\n\n`;
+  md += `### 2.1 Segmentation (시장 세분화)\n`;
+  md += `- **인구통계적 기준:** ${getVal('segDemo')}\n`;
+  md += `- **지리적 기준:** ${getVal('segGeo')}\n`;
+  md += `- **심리적 기준:** ${getVal('segPsy')}\n`;
+  md += `- **행동적 기준:** ${getVal('segBehavior')}\n`;
+  md += `- **주요 세그먼트 프로필:** ${getVal('segmentProfiles')}\n\n`;
+
+  md += `### 2.2 Targeting (표적시장 선정)\n`;
+  md += `- **Primary Target:** ${getVal('primaryTarget')}\n`;
+  md += `- **Secondary Target:** ${getVal('secondaryTarget')}\n`;
+  md += `- **타깃 선정 근거:** ${getVal('targetRationale')}\n\n`;
+
+  md += `### 2.3 Positioning (포지셔닝 전략)\n`;
+  md += `- **차별점 (POD):** ${getVal('pod')}\n`;
+  md += `- **공통점 (POP):** ${getVal('pop')}\n`;
+  md += `- **Positioning Statement:**\n  > ${getVal('positioningStatement')}\n\n`;
+
+  md += `## 3. 4P Marketing Mix (실행 전략)\n\n`;
+  md += `### 3.1 Product (제품 전략)\n`;
+  md += `- **핵심 제품/서비스:** ${getVal('productCore')}\n`;
+  md += `- **차별화 요소:** ${getVal('productDiff')}\n`;
+  md += `- **브랜드 & 패키징:** ${getVal('productBrand')}\n`;
+  md += `- **부가가치 & 서비스:** ${getVal('productValue')}\n\n`;
+
+  md += `### 3.2 Price (가격 전략)\n`;
+  md += `- **가격 수준:** ${getVal('priceLevel')}\n`;
+  md += `- **수익/수수료 모델:** ${getVal('priceModel')}\n`;
+  md += `- **가격 책정 전략:** ${getVal('priceStrategy')}\n`;
+  md += `- **할인 & 프로모션:** ${getVal('priceDiscount')}\n\n`;
+
+  md += `### 3.3 Place (유통 전략)\n`;
+  md += `- **주요 유통 채널:** ${getVal('placeChannel')}\n`;
+  md += `- **커버리지/입지:** ${getVal('placeCoverage')}\n`;
+  md += `- **물류 및 고객 접점:** ${getVal('placeLogistics')}\n`;
+  md += `- **파트너십:** ${getVal('placePartner')}\n\n`;
+
+  md += `### 3.4 Promotion (촉진 전략)\n`;
+  md += `- **커뮤니케이션 믹스:** ${getVal('promoMix')}\n`;
+  md += `- **핵심 메시지:** ${getVal('promoMessage')}\n`;
+  md += `- **예산 집행 계획:** ${getVal('promoBudget')}\n`;
+  md += `- **마케팅 채널:** ${getVal('promoChannel')}\n\n`;
+
+  downloadFile(md, `${pName}_strategy_report.md`, 'text/markdown;charset=utf-8;');
+}
+
+function resetForm() {
+  if (confirm('모든 입력 데이터와 포지셔닝 맵 설정이 초기화됩니다. 계속하시겠습니까?')) {
+    localStorage.removeItem('mkt_hub_data');
+    location.reload();
+  }
+}
+</script>
+<script>
+/* ==========================================================================
+   STRATEGIC DECISION SIMULATOR (5차년도 1분기 재무제표 기준)
+   ========================================================================== */
+const sdEl = id => document.getElementById('sd-' + id);
+function sdNum(id) {
+  const el = sdEl(id);
+  if (!el) return null;
+  const t = String(el.value).trim();
+  if (t === '') return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+const sdF = (x, d = 2) => (x == null || !Number.isFinite(x)) ? '미확인' : x.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const sdM = x => (x == null || !Number.isFinite(x)) ? '미확인' : sdF(x) + '억';
+const sdS = x => (x == null || !Number.isFinite(x)) ? '미확인' : (x > 0 ? '+' : '') + sdF(x) + '억';
+const sdP = x => (x == null || !Number.isFinite(x)) ? '미확인' : (x * 100).toFixed(1) + '%';
+const sdCls = x => x == null ? '' : x >= 0 ? 'text-green' : 'text-red';
+const SD_ITEM_NAMES = ['기술 A', '기술 B', 'CRM', 'SCM', '조직문화', '부품 입찰'];
+
+function sdReadInputs() {
+  const d = {
+    cash: sdNum('cash'), quick: sdNum('quick'), rev: sdNum('rev'), oi: sdNum('profit'), ni: sdNum('ni'),
+    equity: sdNum('equity'), debt: sdNum('debt') ?? 0, log: sdNum('log'), mat: sdNum('mat'),
+    margin: sdNum('margin'), n: sdNum('n'), reserve: sdNum('reserve') ?? 0, rate: sdNum('rate') ?? 0,
+    borrow: sdEl('borrow').value === '1', tPct: sdNum('tpct'), sPct: sdNum('spct'), dPct: sdNum('dpct'),
+    unk0: sdEl('unk0').checked, bid: sdNum('bid'), pmode: sdEl('pmode').value, probIn: sdNum('prob'),
+    comps: ['abid', 'bbid', 'dbid'].map(sdNum).filter(v => v != null), tie: sdEl('tie').value,
+    acct: sdEl('acct').value, crit: sdEl('crit').value, maxLoss: (sdNum('maxloss') ?? 100) / 100
+  };
+  d.m = d.margin == null ? null : d.margin / 100;
+  // 매출 1%p 증가가 만드는 분기 공헌이익 / 누적 공헌이익
+  d.q1u = (d.rev != null && d.m != null) ? d.rev * d.m / 100 : null;
+  d.V1 = (d.q1u != null && d.n != null) ? d.q1u * d.n : null;
+  d.cap = d.quick != null ? d.quick * 0.6 : null;
+  d.bidValid = d.bid != null && d.cap != null && d.bid >= 40 && d.bid <= d.cap;
+  // 낙찰 확률
+  if (d.pmode === 'manual') {
+    d.p = d.probIn == null ? null : Math.min(1, Math.max(0, d.probIn / 100));
+    d.pNote = d.p == null ? '낙찰 확률 미입력' : `직접 입력 ${sdP(d.p)}`;
+  } else if (d.comps.length === 0 || d.bid == null) {
+    d.p = null; d.pNote = '경쟁사 예상 입찰가 미입력';
+  } else {
+    const top = Math.max(...d.comps);
+    d.topComp = top;
+    if (d.bid > top) { d.p = 1; d.pNote = `경쟁사 최고 ${sdM(top)}보다 높음 → 낙찰`; }
+    else if (d.bid < top) { d.p = 0; d.pNote = `경쟁사 최고 ${sdM(top)}보다 낮음 → 실패`; }
+    else { d.p = d.tie === 'c' ? 1 : d.tie === 'o' ? 0 : 0.5; d.pNote = `경쟁사 최고가와 동률 → ${d.tie === 'c' ? 'C사 우선 낙찰' : d.tie === 'o' ? '경쟁사 우선 (실패)' : '순위 미확인 50%'}`; }
+  }
+  return d;
+}
+
+// 모르는 효과 처리: unk0이면 0으로, 아니면 null(계산 불가)
+function sdEff(d, v) { return v == null ? (d.unk0 ? { v: 0, unk: true } : { v: null, unk: true }) : { v, unk: false }; }
+const sdMul = (a, b) => (a == null || b == null) ? null : a * b;
+
+function sdBuildItems(d) {
+  const t = sdEff(d, d.tPct), s = sdEff(d, d.sPct), dp = sdEff(d, d.dPct);
+  const sd = (s.v == null || dp.v == null) ? null : s.v + dp.v;
+  const o = (p, label, net, q1, dRev, cash, unk = false) => ({ p, label, net, q1, dRev, cash, unk });
+  const sub = (x, c) => x == null ? null : x - c;
+  const scmQ = d.log == null ? null : d.log * 0.2;
+  const matQ = d.mat == null ? (d.unk0 ? 0 : null) : d.mat * 0.1;
+  const b = d.bid ?? 0;
+  const items = [
+    { name: '기술 A', cost: 50, out: [
+      o(0.6, '+1등급', sub(sdMul(t.v, d.V1), 50), -50, 0, 50, t.unk),
+      o(0.4, '상승 없음 (기타비용)', -50, -50, 0, 50) ] },
+    { name: '기술 B', cost: 150, out: [
+      o(0.8, '+1등급', sub(sdMul(t.v, d.V1), 150), -150, 0, 150, t.unk),
+      o(0.2, '+2등급', sub(sdMul(t.v == null ? null : 2 * t.v, d.V1), 150), -150, 0, 150, t.unk) ] },
+    { name: 'CRM', cost: 20, out: [
+      o(0.7, '성공 (영업·매장 +1등급)', sub(sdMul(sd, d.V1), 20), sub(sdMul(sd, d.q1u), 20), sdMul(sd, d.rev == null ? null : d.rev / 100), 20, s.unk || dp.unk),
+      o(0.3, '실패 (기타비용)', -20, -20, 0, 20) ] },
+    { name: 'SCM', cost: 20, out: [
+      o(0.8, '성공 (물류비 −20%)', scmQ == null || d.n == null ? null : scmQ * d.n - 20, sub(scmQ, 20), 0, 20),
+      o(0.2, '실패 (기타비용)', -20, -20, 0, 20) ] },
+    { name: '조직문화', cost: 20, out: [
+      o(0.5, '성공 (영업 +1등급)', sub(sdMul(s.v, d.V1), 20), sub(sdMul(s.v, d.q1u), 20), sdMul(s.v, d.rev == null ? null : d.rev / 100), 20, s.unk),
+      o(0.2, '효과 없음', -20, -20, 0, 20),
+      o(0.3, '역효과 (영업 −1등급)', s.v == null || d.V1 == null ? null : -s.v * d.V1 - 20, s.v == null || d.q1u == null ? null : -s.v * d.q1u - 20, s.v == null || d.rev == null ? null : -s.v * d.rev / 100, 20, s.unk) ] },
+    { name: '부품 입찰', cost: b, out: [
+      o(d.p, '낙찰 (재료비 −10%)', matQ == null || d.n == null || !d.bidValid ? null : matQ * d.n - b, matQ == null || !d.bidValid ? null : matQ - (d.acct === 'expense' ? b : 0), 0, b, d.mat == null),
+      o(d.p == null ? null : 1 - d.p, '실패 (입찰금 10% 기타비용)', d.bidValid ? -0.1 * b : null, d.bidValid ? -0.1 * b : null, 0, 0.1 * b) ] }
+  ];
+  return items;
+}
+
+// 결과 분포 → 통계
+function sdStats(out, d, base) {
+  const act = out.filter(r => r.p !== 0);
+  const known = act.every(r => r.p != null && r.net != null);
+  const qKnown = act.every(r => r.p != null && r.q1 != null);
+  const maxCash = Math.max(0, ...act.map(r => r.cash));
+  const leftRaw = d.cash == null ? null : d.cash - maxCash;
+  let borrowNeed = 0, feasible = true;
+  if (leftRaw != null && leftRaw < d.reserve) {
+    if (d.borrow) borrowNeed = d.reserve - leftRaw; else feasible = false;
+  }
+  const interest = borrowNeed * d.rate / 100;
+  const ev = known ? act.reduce((a, r) => a + r.p * r.net, 0) - interest : null;
+  const worst = act.every(r => r.net != null) ? Math.min(...act.map(r => r.net)) - interest : null;
+  const loss = known ? act.reduce((a, r) => a + (r.net - interest < 0 ? r.p : 0), 0) : null;
+  const eQ1 = qKnown ? act.reduce((a, r) => a + r.p * r.q1, 0) : null;
+  const worstOut = act.every(r => r.q1 != null) ? act.reduce((w, r) => (w == null || r.q1 < w.q1) ? r : w, null) : null;
+  const eRev = qKnown ? act.reduce((a, r) => a + r.p * (r.dRev || 0), 0) : null;
+  const eCash = act.every(r => r.p != null) ? act.reduce((a, r) => a + r.p * r.cash, 0) : null;
+  return { ev, worst, loss, eQ1, eRev, eCash, worstOut, maxCash, borrowNeed, interest, feasible,
+    left: leftRaw == null ? null : leftRaw + borrowNeed, unk: act.some(r => r.unk),
+    worstOI: worstOut && base != null ? base + worstOut.q1 : null };
+}
+
+function sdCombo(ids, items, d) {
+  let out = [{ p: 1, net: 0, q1: 0, dRev: 0, cash: 0, unk: false, label: '' }];
+  for (const j of ids) {
+    out = out.flatMap(a => items[j].out.map(r => ({
+      p: a.p == null || r.p == null ? null : a.p * r.p,
+      net: a.net == null || r.net == null ? null : a.net + r.net,
+      q1: a.q1 == null || r.q1 == null ? null : a.q1 + r.q1,
+      dRev: (a.dRev ?? 0) + (r.dRev ?? 0),
+      cash: a.cash + r.cash,
+      unk: a.unk || r.unk
+    })));
+  }
+  const cost = ids.reduce((a, j) => a + items[j].cost, 0);
+  return { ids, name: ids.map(j => items[j].name).join(' + ') || '미투자', cost, out, ...sdStats(out, d, d.oi) };
+}
+
+function sdAllCombos(items, d) {
+  const list = [];
+  for (const t of [-1, 0, 1]) for (let mask = 0; mask < 16; mask++) {
+    const ids = t < 0 ? [] : [t];
+    for (let j = 0; j < 4; j++) if (mask & (1 << j)) ids.push(j + 2);
+    if (ids.includes(5) && !d.bidValid) continue;
+    list.push(sdCombo(ids, items, d));
+  }
+  return list;
+}
+
+function sdPassCrit(x, d) {
+  if (!x.feasible || x.ev == null) return false;
+  if (d.crit === 'loss') return x.loss != null && x.loss <= d.maxLoss + 1e-9;
+  if (d.crit === 'oi') return x.worstOI != null && x.worstOI >= 0;
+  return true;
+}
+
+function sdSelectedIds() {
+  const t = Number(sdEl('tech').value);
+  return [...(t === 50 ? [0] : t === 150 ? [1] : []),
+    ...[2, 3, 4, 5].filter((j, i) => sdEl(['crm', 'scm', 'hr', 'cf'][i]).value === '1')];
+}
+
+function sdBreakEven(i, d, item) {
+  const pct = v => v == null ? '미확인' : sdF(v, 2) + '%';
+  switch (i) {
+    case 0: return `모델 +1등급이 분기 매출을 ${pct(d.V1 ? 50 / (0.6 * d.V1) : null)} 이상 올려야 본전`;
+    case 1: return `모델 +1등급이 분기 매출을 ${pct(d.V1 ? 150 / (1.2 * d.V1) : null)} 이상 올려야 본전`;
+    case 2: return `영업+매장 합계 ${pct(d.V1 ? 20 / (0.7 * d.V1) : null)} 이상 매출 증가 시 본전`;
+    case 3: return `분기 물류비 ${sdM(d.n ? 20 / (0.8 * 0.2 * d.n) : null)} 이상이면 본전 (현재 ${sdM(d.log)})`;
+    case 4: return `영업 +1등급이 분기 매출을 ${pct(d.V1 ? 20 / (0.2 * d.V1) : null)} 이상 올려야 본전 (역효과 30% 감안)`;
+    case 5: {
+      if (!d.bidValid) return '입찰금액이 허용 범위 밖';
+      if (d.p == null || d.p === 0 || !d.n) return `낙찰돼도 분기 재료비 ${sdM(d.n ? d.bid / (0.1 * d.n) : null)} 이상이어야 본전`;
+      const matNeed = d.bid * (d.p + 0.1 * (1 - d.p)) / (0.1 * d.n * d.p);
+      return `분기 재료비 ${sdM(matNeed)} 이상이면 기대 본전`;
+    }
+  }
+  return '';
+}
+
+function sdCalc() {
+  const d = sdReadInputs();
+  const items = sdBuildItems(d);
+  const setRail = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setRail('railCash', sdM(d.cash));
+  setRail('railOi', sdM(d.oi));
+  setRail('railOpm', d.oi != null && d.rev ? (d.oi / d.rev * 100).toFixed(2) + '%' : '—');
+  setRail('railNi', sdM(d.ni));
+  const combos = sdAllCombos(items, d);
+  const ranked = combos.filter(x => sdPassCrit(x, d)).sort((a, b) => b.ev - a.ev || a.cost - b.cost);
+  const best = ranked[0] || null;
+  window.sdBestIds = best ? best.ids : null;
+  const sel = sdCombo(sdSelectedIds(), items, d);
+
+  // ② 환산 안내
+  sdEl('v1').textContent = d.V1 == null ? '매출액·공헌이익률·효과 지속 분기를 입력하면 환산 기준이 표시됩니다.'
+    : `기준: 분기 매출이 1% 늘면 분기 공헌이익 ${sdM(d.q1u)}, ${d.n}분기 누적 ${sdM(d.V1)} 증가.`;
+
+  // ③ 입찰 안내
+  const bi = sdEl('bidinfo');
+  const lines = [`입찰 가능 범위: 40억 ~ ${sdM(d.cap)} (당좌자산의 60%)`, d.pNote];
+  if (d.topComp != null) lines.push(`경쟁사 최고가를 넘는 최소 입찰가: 약 ${sdM(d.topComp + 0.01)}`);
+  if (d.mat != null && d.n) lines.push(`낙찰 시 본전 입찰가: ${sdM(d.mat * 0.1 * d.n)} (재료비 10% × ${d.n}분기)`);
+  else lines.push('재료비가 없어 낙찰 시 절감액을 계산할 수 없습니다.');
+  bi.innerHTML = lines.join('<br>');
+  bi.className = 'notice ' + (d.bidValid ? '' : 'danger');
+
+  // ⑤ 선택 조합 핵심 수치
+  const failCash = d.cash == null ? null : d.cash - sel.out.reduce((m, r) => Math.min(m, r.cash), Infinity);
+  sdEl('metrics').innerHTML = [
+    ['최대 자금 부담', sdM(sel.maxCash)],
+    ['필요 차입', sel.borrowNeed > 0 ? sdM(sel.borrowNeed) : '없음'],
+    ['잔여현금 (최대 지출 시)', sdM(sel.left)],
+    ['기대 누적 순손익', sdS(sel.ev)]
+  ].map(([k, v]) => `<div class="metric"><span>${k}</span><strong>${v}</strong></div>`).join('');
+
+  const warn = [];
+  if (sdSelectedIds().includes(5) && !d.bidValid) warn.push(`입찰금액이 허용 범위(40억 ~ ${sdM(d.cap)}) 밖이라 부품 입찰은 계산에서 빠졌습니다`);
+  if (sdSelectedIds().includes(5) && d.p == null) warn.push('부품 입찰 낙찰 확률을 정할 수 없습니다 (경쟁사 입찰가 또는 확률 입력 필요)');
+  if (!sel.feasible) warn.push(`잔여현금이 목표 ${sdM(d.reserve)}에 못 미칩니다. 차입을 허용하거나 조합을 줄여야 합니다`);
+  if (sel.borrowNeed > 0) warn.push(`목표 현금을 지키려면 ${sdM(sel.borrowNeed)} 차입 필요 (이자 약 ${sdM(sel.interest)}/분기)`);
+  if (sel.unk) warn.push('모르는 효과를 0으로 계산한 항목이 있어, 실제 효과가 있다면 결과는 더 좋아집니다');
+  if (sdSelectedIds().some(j => j <= 1)) warn.push('원천 기술은 이번 분기에는 비용만 잡히고 효과는 신제품 출시 후에 나타납니다');
+  const w = sdEl('warning');
+  w.textContent = warn.length ? warn.join(' · ') : '현금 목표와 입찰 범위를 모두 충족합니다.';
+  w.className = 'notice ' + (!sel.feasible ? 'danger' : warn.length ? '' : 'good');
+
+  // ⑤ 재무비율 (이번 분기 pro-forma)
+  const ratio = (a, b) => (a == null || b == null || b === 0) ? null : a / b;
+  const pc = x => x == null ? '—' : (x * 100).toFixed(2) + '%';
+  const quickRatio = (q, liab) => liab <= 0 ? '부채 없음' : pc(q / liab);
+  const mk = (dRev, q1, cashOut) => {
+    const borrow = sel.borrowNeed;
+    const rev = d.rev == null || dRev == null ? null : d.rev + dRev;
+    const oi = d.oi == null || q1 == null ? null : d.oi + q1;
+    const ni = d.ni == null || q1 == null ? null : d.ni + q1 - sel.interest;
+    const eq = d.equity == null || ni == null || d.ni == null ? null : d.equity + (ni - d.ni);
+    const liab = d.debt + borrow;
+    const cash = d.cash == null || cashOut == null ? null : d.cash - cashOut + borrow;
+    const quick = d.quick == null || cashOut == null ? null : d.quick - cashOut + borrow;
+    return { rev, oi, opm: ratio(oi, rev), ni, npm: ratio(ni, rev), roe: ratio(ni, eq), cash, quickR: quick == null ? '—' : quickRatio(quick, liab), debtR: ratio(liab, eq) };
+  };
+  const before = { rev: d.rev, oi: d.oi, opm: ratio(d.oi, d.rev), ni: d.ni, npm: ratio(d.ni, d.rev), roe: ratio(d.ni, d.equity), cash: d.cash, quickR: d.quick == null ? '—' : quickRatio(d.quick, d.debt), debtR: ratio(d.debt, d.equity) };
+  const exp = mk(sel.eRev, sel.eQ1, sel.eCash);
+  const wo = sel.worstOut;
+  const worst = wo ? mk(wo.dRev, wo.q1, wo.cash) : mk(null, null, null);
+  const rowsR = [
+    ['매출액', 'rev', sdM], ['영업이익', 'oi', sdM], ['영업이익률', 'opm', pc], ['당기순이익', 'ni', sdM],
+    ['순이익률', 'npm', pc], ['ROE (분기)', 'roe', pc], ['기말 현금', 'cash', sdM], ['당좌비율', 'quickR', v => v], ['부채비율', 'debtR', pc]
+  ];
+  sdEl('ratios').innerHTML = rowsR.map(([k, key, fmt]) => {
+    const c = (v, b) => (typeof v === 'number' && typeof b === 'number') ? (v < b - 1e-9 ? 'text-red' : v > b + 1e-9 ? 'text-green' : '') : '';
+    const better = key === 'debtR' ? (v, b) => c(b, v) : c;
+    return `<tr><td>${k}</td><td>${fmt(before[key])}</td><td class="${better(exp[key], before[key])}">${fmt(exp[key])}</td><td class="${better(worst[key], before[key])}">${fmt(worst[key])}</td></tr>`;
+  }).join('');
+
+  // ⑥ 투자별 분석
+  sdEl('detail').innerHTML = items.map((it, i) => {
+    const z = sdStats(it.out, { ...d, cash: null }, d.oi);
+    const roi = z.ev == null || !it.cost ? null : z.ev / it.cost;
+    const outs = it.out.map(r => `${r.label} ${sdP(r.p)} / ${r.net == null ? '미확인' : sdS(r.net)}${r.unk && r.net != null ? '*' : ''}`).join('<br>');
+    return `<tr><td>${it.name}</td><td>${sdM(it.cost)}</td><td style="text-align:left">${outs}</td><td class="${sdCls(z.ev)}">${sdS(z.ev)}${roi == null ? '' : `<br><span class="note">ROI ${sdP(roi)}</span>`}</td><td>${sdS(z.worst)}</td><td>${sdP(z.loss)}</td><td class="${sdCls(z.eQ1)}">${sdS(z.eQ1)}</td><td style="text-align:left;font-size:12px">${sdBreakEven(i, d, it)}</td></tr>`;
+  }).join('') + (d.unk0 ? '<tr><td colspan="8" class="note" style="text-align:left">* 모르는 효과를 0으로 놓고 계산한 값</td></tr>' : '');
+
+  // ④ 추천 근거
+  const critName = { ev: '기대 순손익 최대', loss: `손실 확률 ${sdP(d.maxLoss)} 이하 중 기대 순손익 최대`, oi: '최악이어도 이번 분기 영업이익 흑자 유지' }[d.crit];
+  const nInfeasible = combos.filter(x => !x.feasible).length;
+  sdEl('reason').innerHTML = best
+    ? `<strong>정량 추천 (${critName}): ${best.name}</strong><br>기대 누적 순손익 ${sdS(best.ev)} · 최악 ${sdS(best.worst)} · 손실 확률 ${sdP(best.loss)} · 최대 자금 부담 ${sdM(best.maxCash)}${best.borrowNeed > 0 ? ` (차입 ${sdM(best.borrowNeed)})` : ''} · 최악 시 이번 분기 영업이익 ${sdM(best.worstOI)}` +
+      (best.unk ? '<br><span class="text-amber">모르는 효과를 0으로 놓은 결과라, 효과를 입력하면 추천이 바뀔 수 있습니다.</span>' : '') +
+      (nInfeasible ? `<br>현금 목표 때문에 실행할 수 없는 조합: ${nInfeasible}개${d.borrow ? '' : ' (차입을 허용하면 다시 계산됩니다)'}` : '')
+    : `조건(${critName})과 현금 목표를 함께 만족하는 조합이 없습니다. 기준을 완화하거나 모르는 효과를 입력해 보세요.`;
+
+  // ⑦ 조합 비교
+  let shown = [...ranked.slice(0, 8), sel, sdCombo([], items, d)];
+  shown = shown.filter((x, i) => shown.findIndex(y => y.name === x.name) === i);
+  sdEl('combos').innerHTML = shown.map(x => {
+    const tag = [best && x.name === best.name ? '정량 추천' : '', x.name === sel.name ? '현재 선택' : '', !x.feasible ? '현금 부족' : ''].filter(Boolean).join(', ');
+    return `<tr${best && x.name === best.name ? ' style="background:#f1f5f9;font-weight:600"' : ''}><td>${x.name}${tag ? ` <span class="note">(${tag})</span>` : ''}${x.unk ? '*' : ''}</td><td>${sdM(x.maxCash)}</td><td>${x.borrowNeed > 0 ? sdM(x.borrowNeed) : '—'}</td><td>${sdM(x.left)}</td><td class="${sdCls(x.ev)}">${sdS(x.ev)}</td><td>${sdS(x.worst)}</td><td>${sdP(x.loss)}</td><td class="${sdCls(x.worstOI)}">${sdM(x.worstOI)}</td></tr>`;
+  }).join('');
+  sdEl('selected').textContent = `현재 선택: ${sel.name} | 기대 누적 순손익 ${sdS(sel.ev)} | 최악 ${sdS(sel.worst)} | 손실 확률 ${sdP(sel.loss)} | 기대 이번 분기 영업이익 영향 ${sdS(sel.eQ1)}`;
+}
+
+function sdApplyBest() {
+  sdCalc();
+  const ids = window.sdBestIds;
+  if (!ids) { alert('추천 기준과 현금 목표를 만족하는 조합이 없습니다.'); return; }
+  sdEl('tech').value = ids.includes(0) ? '50' : ids.includes(1) ? '150' : '0';
+  ['crm', 'scm', 'hr', 'cf'].forEach((k, i) => { sdEl(k).value = ids.includes(i + 2) ? '1' : '0'; });
+  sdCalc();
+}
+function sdClear() {
+  sdEl('tech').value = '0';
+  ['crm', 'scm', 'hr', 'cf'].forEach(k => { sdEl(k).value = '0'; });
+  sdCalc();
+}
+const sdDeep = sdCalc; // 이전 버전 호환
+
+document.getElementById('page-strategic').addEventListener('input', sdCalc);
+document.getElementById('page-strategic').addEventListener('change', sdCalc);
+sdCalc();
+
+</script>
+</body>
+</html>
